@@ -8,7 +8,24 @@
 &lt;h1 id="getting-started">Getting Started&lt;/h1>
 &lt;p>The installation is very straight-forward. Just follow the &lt;a href="https://gohugo.io/categories/installation/">instructions for each platform&lt;/a>.&lt;/p>
 &lt;p>Then one can just follow &lt;a href="https://gohugo.io/getting-started/quick-start/">quick start&lt;/a>. When I get to the step of adding &lt;code>ananke&lt;/code> theme, I jumped to the &lt;a href="https://github.com/AmazingRise/hugo-theme-diary#quick-start">Dairy instructions&lt;/a> instead.&lt;/p>
-&lt;h1 id="configuration">Configuration&lt;/h1>
+&lt;h1 id="adding-contents">Adding Contents&lt;/h1>
+&lt;p>To add a new post, type:&lt;/p>
+&lt;pre tabindex="0">&lt;code>hugo new posts/my-first-post.md
+&lt;/code>&lt;/pre>&lt;p>You can also type:&lt;/p>
+&lt;pre tabindex="0">&lt;code>hugo new posts/my-first-post/index.md
+&lt;/code>&lt;/pre>&lt;p>The main difference is that the latter will create a directory for my-first-post. If the post contains images, you can add it to the same directory.&lt;/p>
+&lt;p>I also added an about page:&lt;/p>
+&lt;pre tabindex="0">&lt;code>hugo new about/index.md
+&lt;/code>&lt;/pre>&lt;p>To prevent the about page showing up like a blog, just locate the front matter which is a section at the beginning of the page and remove the &lt;code>date&lt;/code> entry:&lt;/p>
+&lt;pre tabindex="0">&lt;code>---
+title: &amp;#34;About Me&amp;#34;
+draft: false
+---
+&lt;/code>&lt;/pre>&lt;p>To build the static web site locally, run:&lt;/p>
+&lt;pre tabindex="0">&lt;code>hugo server
+&lt;/code>&lt;/pre>&lt;p>To include the draft pages, run:&lt;/p>
+&lt;pre tabindex="0">&lt;code>hugo server -D
+&lt;/code>&lt;/pre>&lt;h1 id="configuration">Configuration&lt;/h1>
 &lt;p>Most of the configurations are in the &lt;code>config.toml&lt;/code> file. One first needs to follow the instructions to set &lt;code>baseUrl&lt;/code>, &lt;code>title&lt;/code>, &lt;code>theme&lt;/code>, etc.&lt;/p>
 &lt;h2 id="configuring-main-menu">Configuring Main Menu&lt;/h2>
 &lt;p>Configuring the main menu is pretty straightforward. Just add several &lt;code>[[menu.main]]&lt;/code> elements. The double square-bracket means array in toml.&lt;/p>
@@ -35,5 +52,5 @@ theme=&amp;#34;github-light&amp;#34;
 &lt;h2 id="syntax-highlighter">Syntax Highlighter&lt;/h2>
 &lt;p>Dairy theme has a default &lt;a href="https://github.com/AmazingRise/hugo-theme-diary/wiki/Customization#about-highlight">code highlighter&lt;/a> and we will see how it goes.&lt;/p>
 &lt;h2 id="cicd">CI/CD&lt;/h2>
-&lt;p>To deploy to &lt;code>site.github.io&lt;/code>, one has to configure github action to build the site. This is basically adding and config the page &lt;code>.github/workflows/gh-pages.yml&lt;/code>. Follow the &lt;a href="https://gohugo.io/hosting-and-deployment/hosting-on-github/">instructions&lt;/a> from Hugo.&lt;/p>
+&lt;p>To deploy to &lt;code>site.github.io&lt;/code>, one has to configure github action to build the site. This is basically adding and config the page &lt;code>.github/workflows/gh-pages.yml&lt;/code>. Follow the &lt;a href="https://gohugo.io/hosting-and-deployment/hosting-on-github/">instructions&lt;/a> from Hugo. In &lt;code>gh-pages.yml&lt;/code>, uncomment the line that says &lt;code>extended: true&lt;/code>. After the github action runs successfully, go to github Settings -&amp;gt; Pages, under the &lt;code>Build and deployment&lt;/code> section, change the branch to &lt;code>gh-pages&lt;/code>. Then the pages should deploy to https://&amp;lt;USERNAME|ORGANIZATION&amp;gt;.github.io/.&lt;/p>
 - https://aspcompiler.github.io/posts/remaking-of-my-blog/ - 2023 Li Chen</description></item></channel></rss>
