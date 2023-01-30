@@ -20,6 +20,7 @@ theme = 'diary'
 [params]
 subtitle = "Share my research and learning."
 googleSearchCode = "b622800d93aee436f"
+enableReadingTime=true
 
 [params.utterances]
 repo="aspcompiler/aspcompiler.github.io"
