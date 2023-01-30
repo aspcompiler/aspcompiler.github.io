@@ -24,6 +24,48 @@ The installation is very straight-forward. Just follow the [instructions for eac
 
 Then one can just follow [quick start](https://gohugo.io/getting-started/quick-start/). When I get to the step of adding `ananke` theme, I jumped to the [Dairy instructions](https://github.com/AmazingRise/hugo-theme-diary#quick-start) instead.
 
+# Adding Contents
+
+To add a new post, type:
+
+```
+hugo new posts/my-first-post.md
+```
+
+You can also type:
+
+```
+hugo new posts/my-first-post/index.md
+```
+
+The main difference is that the latter will create a directory for my-first-post. If the post contains images, you can add it to the same directory.
+
+I also added an about page:
+
+```
+hugo new about/index.md
+```
+
+To prevent the about page showing up like a blog, just locate the front matter which is a section at the beginning of the page and remove the `date` entry:
+
+```
+---
+title: "About Me"
+draft: false
+---
+```
+
+To build the static web site locally, run:
+
+```
+hugo server
+```
+
+To include the draft pages, run:
+
+```
+hugo server -D
+```
 # Configuration
 
 Most of the configurations are in the `config.toml` file. One first needs to follow the instructions to set `baseUrl`, `title`, `theme`, etc.
@@ -69,4 +111,4 @@ Dairy theme has a default [code highlighter](https://github.com/AmazingRise/hugo
 
 ## CI/CD
 
-To deploy to `site.github.io`, one has to configure github action to build the site. This is basically adding and config the page `.github/workflows/gh-pages.yml`. Follow the [instructions](https://gohugo.io/hosting-and-deployment/hosting-on-github/) from Hugo.
+To deploy to `site.github.io`, one has to configure github action to build the site. This is basically adding and config the page `.github/workflows/gh-pages.yml`. Follow the [instructions](https://gohugo.io/hosting-and-deployment/hosting-on-github/) from Hugo.  In `gh-pages.yml`, uncomment the line that says `extended: true`. After the github action runs successfully, go to github Settings -> Pages, under the `Build and deployment` section, change the branch to `gh-pages`. Then the pages should deploy to https://<USERNAME|ORGANIZATION>.github.io/.
