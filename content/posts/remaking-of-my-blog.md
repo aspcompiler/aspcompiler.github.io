@@ -1,6 +1,8 @@
 ---
 title: "The Remaking of My Blog with Hugo"
 date: 2023-01-28T22:16:35-08:00
+tags: ["Static Site Generator", "Hugo", "Dairy"]
+categories: Static Site Generator"
 draft: false
 ---
 
