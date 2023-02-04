@@ -1,4 +1,111 @@
-<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Sat, 28 Jan 2023 22:16:35 -0800</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>The Remaking of My Blog with Hugo</title><link>https://aspcompiler.github.io/posts/remaking-of-my-blog/</link><pubDate>Sat, 28 Jan 2023 22:16:35 -0800</pubDate><guid>https://aspcompiler.github.io/posts/remaking-of-my-blog/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/remaking-of-my-blog/ -&lt;h1 id="the-remaking">The remaking&lt;/h1>
+<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Sat, 04 Feb 2023 14:42:43 -0800</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Getting Started With LLVM (1)</title><link>https://aspcompiler.github.io/posts/getting-started-with-llvm-1/</link><pubDate>Sat, 04 Feb 2023 14:42:43 -0800</pubDate><guid>https://aspcompiler.github.io/posts/getting-started-with-llvm-1/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/getting-started-with-llvm-1/ -&lt;h1 id="why-should-i-learn-llvm">Why should I learn LLVM?&lt;/h1>
+&lt;p>According to ChatGPT, there are several reasons why you should learn the LLVM compiler framework:&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Popularity: LLVM is widely used in the industry, making it an important skill for those working in software development or computer science.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Versatility: LLVM can be used for a wide range of programming languages, making it a valuable tool for those who work with multiple languages.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Performance: LLVM is known for its high-performance code generation, making it a valuable tool for optimizing software applications.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Open-source: LLVM is an open-source framework, which means that you have access to the source code and can make modifications to fit your needs.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Community: LLVM has a large and active community of developers and users, making it easier to find support and resources when working with the framework.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Career opportunities: Knowledge of LLVM can help you stand out in the job market and open up new career opportunities in areas such as compiler development, software engineering, and optimization.&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;h1 id="how-to-get-started-according-to-chatgpt">How to get started according to ChatGPT?&lt;/h1>
+&lt;p>According to ChatGPT:&lt;/p>
+&lt;p>To get started with the LLVM compiler framework, follow these steps:&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Familiarize yourself with the basics of compilers and how they work.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Read the LLVM documentation: The LLVM documentation is a great resource for learning about the framework, its features, and how to use them.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Set up a development environment: You will need to have a development environment set up with the LLVM compiler framework installed. There are many tutorials available online to help you get started with the setup process.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Practice writing simple programs: Start by writing simple programs and experimenting with the LLVM compiler framework to get a feel for how it works.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Participate in online communities: Join online forums or communities dedicated to LLVM to ask questions, learn from others, and stay up-to-date with the latest developments.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Read LLVM source code: Reading LLVM source code is a great way to understand how the framework works and learn best practices for using it.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>Get involved in development: Consider contributing to the LLVM project by fixing bugs or adding new features. This is a great way to get hands-on experience with the framework and make a meaningful contribution to the community.&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;h1 id="a-concrete-way-to-get-started">A concrete way to get started&lt;/h1>
+&lt;p>Well, that sounds abstract. Let us be more concrete. LLVM has an excellent &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html">tutorial&lt;/a>. However, there are challenges to get started:&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>The LLVM tutorial started by &lt;a href="https://llvm.org/docs/GettingStarted.html">guiding us to build LLVM from source&lt;/a>. It takes hours and LLVM is very demanding of the host C++ compiler, and as such tends to expose bugs in the compiler.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>The LLVM tutorial quickly jumps to more advanced compiler concepts, such &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl03.html">Static Single Assignment(SSA)&lt;/a>. A &lt;a href="https://lowlevelbits.org/how-to-learn-compilers-llvm-edition/">blog&lt;/a> recommended a large number of materials to learn before even starting.&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;p>So the objective of this blog series is to provide some concrete steps to start with LLVM. We will solve the 2 issues above with:&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Instead of building LLVM from the source, we will download prebuilt binaries as well as how to use these binaries.&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>I will try to explain more advanced compiler concepts, assuming you already have some basic ideas about a compiler, such as lexer, parser, syntactic and semantic analysis, optimization and code-generation.&lt;/p>
+&lt;/li>
+&lt;/ol>
+&lt;h1 id="getting-the-llvm-binaries">Getting the LLVM binaries&lt;/h1>
+&lt;p>The &lt;a href="https://releases.llvm.org/download.html">LLVM download page&lt;/a> provides prebuilt binaries for a variety of operating systems and CPU architectures. On Linux or MacOS, we can download &lt;code>clang+llvm*&lt;/code> for our platform. For Windows, download &lt;code>llvm*-win64.exe&lt;/code>. If the download is a compressed archive, just expand into any directory.&lt;/p>
+&lt;p>On some platforms, it is possible package manager. For example, on macOS, we can install it with &lt;a href="https://formulae.brew.sh/formula/llvm">Homebrew&lt;/a>.&lt;/p>
+&lt;p>The installers/package managers usually do not add Clang/LLVM to PATH and that is fine. It is likely we will need to work with multiple versions of LLVM. Some OS, such as macOS, has a system Clang, so we do not want to override it. I strongly recommend that we add Clang/LLVM in terminal sessions when we need them.&lt;/p>
+&lt;h1 id="add-clangllvm-to-path">Add Clang/LLVM to path&lt;/h1>
+&lt;p>To add LLVM to path, just run:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">PATH&lt;/span>=PATH_TO_LLVM/bin:&lt;span style="color:#00688b">$PATH&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>If we install LLVM on macOS with Brew, we can run&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">PATH&lt;/span>=&lt;span style="color:#cd5555">&amp;#34;&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">$(&lt;/span>brew --prefix llvm&lt;span style="color:#8b008b;font-weight:bold">)&lt;/span>&lt;span style="color:#cd5555">/bin:&lt;/span>&lt;span style="color:#00688b">$PATH&lt;/span>&lt;span style="color:#cd5555">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h1 id="other-environment-variables">Other environment variables&lt;/h1>
+&lt;p>To build C++ with LLVM libraries, we can configure the LDFLAGS environment variable to point to the libraries. This can be done with:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">LDFLAGS&lt;/span>=&lt;span style="color:#cd5555">&amp;#34;-LPATH_TO_LLVM/lib&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Or with Brew installed LLVM:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">LDFLAGS&lt;/span>=&lt;span style="color:#cd5555">&amp;#34;-L&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">$(&lt;/span>brew --prefix llvm&lt;span style="color:#8b008b;font-weight:bold">)&lt;/span>&lt;span style="color:#cd5555">/lib&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Alternatively, we can also use the &lt;code>llvm-config&lt;/code> utility that comes with LLVM:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>clang++ &lt;span style="color:#cd5555">`&lt;/span>llvm-config --cxxflags&lt;span style="color:#cd5555">`&lt;/span> my_source.cpp
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h1 id="building-llvm-tutorial-code">Building LLVM tutorial code&lt;/h1>
+&lt;p>Once setting up, we can now build our first LLVM source code. Let us save the &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl02.html#full-code-listing">tutorial code&lt;/a> into a file, said, &lt;code>toy.cpp&lt;/code>. Assuming Clang is already in the path, we can run:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22"># Compile&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>clang++ -g -O3 toy.cpp &lt;span style="color:#cd5555">`&lt;/span>llvm-config --cxxflags&lt;span style="color:#cd5555">`&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22"># Run&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>./a.out
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Here -g means to generate debug symbol and -O3 is &lt;a href="https://clang.llvm.org/docs/CommandGuide/clang.html">optimization level 3&lt;/a>.
+We can now run Kaleidoscope Read-Eval-Print Loop (REPL):&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>$ ./a.out
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ready&amp;gt; def foo(x y) x+foo(y, 4.0);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Parsed a &lt;span style="color:#8b008b;font-weight:bold">function&lt;/span> definition.
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ready&amp;gt; def foo(x y) x+y y;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Parsed a &lt;span style="color:#8b008b;font-weight:bold">function&lt;/span> definition.
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Parsed a top-level expr
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ready&amp;gt; def foo(x y) x+y );
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Parsed a &lt;span style="color:#8b008b;font-weight:bold">function&lt;/span> definition.
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Error: unknown token when expecting an expression
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ready&amp;gt; extern sin(a);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ready&amp;gt; Parsed an extern
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ready&amp;gt; ^D
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>$
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The first 2 chapters of &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html">LLVM tutorial&lt;/a> are relatively straigh-forward. You should read through them if you are not already familiar with the material.&lt;/p>
+&lt;h1 id="summary">Summary&lt;/h1>
+&lt;p>In the first blog post of this series, we walk through how to compile and run the first LLVM tutorial.&lt;/p>
+- https://aspcompiler.github.io/posts/getting-started-with-llvm-1/ - 2023 Li Chen</description></item><item><title>The Remaking of My Blog with Hugo</title><link>https://aspcompiler.github.io/posts/remaking-of-my-blog/</link><pubDate>Sat, 28 Jan 2023 22:16:35 -0800</pubDate><guid>https://aspcompiler.github.io/posts/remaking-of-my-blog/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/remaking-of-my-blog/ -&lt;h1 id="the-remaking">The remaking&lt;/h1>
 &lt;p>I have not blogged since I joined Amazon in 2016. My initial focus was &lt;a href="https://www.amazon.jobs/content/en/our-workplace/leadership-principles">delivery results&lt;/a> and then I had to deal with a massive volume of customer interactions and data as the result. Now I want to blog again as I spend significant time doing R&amp;amp;D at AWS Center for Quantum Computing and I need to capture what I learnt, and hopefully that benefits others as well. My original blog site was developed on &lt;a href="https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll">github pages using Jekyll&lt;/a>. The Jekyll has changed significantly so that the side will not build.&lt;/p>
 &lt;h1 id="the-first-attempt-updating-jekyll">The first attempt: updating Jekyll&lt;/h1>
 &lt;p>Updating Jekyll has not been a smooth ride. Jekyll is developed in &lt;a href="https://www.ruby-lang.org/en/">Ruby&lt;/a>. The latest version of Ruby is currently 3.2 but github pages is only compatible with 3.1.3. So one actually has to start with a Ruby version manager such as &lt;a href="https://jekyllrb.com/docs/installation/macos/">chruby&lt;/a> to have multiple versions of Ruby in a system. Then one has to install Ruby Gems into per project environment using &lt;a href="https://jekyllrb.com/docs/ruby-101/">bundler&lt;/a>. Then once every few months, I need to update my Gems and ensure that they are compatible with each other. That is a bit too much maintenance if I just need a tool to write a blog.&lt;/p>
