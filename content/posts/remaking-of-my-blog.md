@@ -24,19 +24,19 @@ Hugo deploys hugo modules as git submodules so [git](https://git-scm.com/) is re
 
 The installation is very straight-forward. Just follow the [instructions for each platform](https://gohugo.io/categories/installation/). 
 
-Then one can just follow [quick start](https://gohugo.io/getting-started/quick-start/). When I get to the step of adding `ananke` theme, I jumped to the [Dairy instructions](https://github.com/AmazingRise/hugo-theme-diary#quick-start) instead.
+Then one can just follow [quick start](https://gohugo.io/getting-started/quick-start/). When I get to the step of adding `ananke` theme, I jumped to the [Dairy theme instructions](https://github.com/AmazingRise/hugo-theme-diary#quick-start) instead. Expand the section under `Quick Start` to find the instructions.
 
 # Adding Contents
 
 To add a new post, type:
 
-```
+```bash
 hugo new posts/my-first-post.md
 ```
 
 You can also type:
 
-```
+```bash
 hugo new posts/my-first-post/index.md
 ```
 
@@ -44,13 +44,13 @@ The main difference is that the latter will create a directory for my-first-post
 
 I also added an about page:
 
-```
+```bash
 hugo new about/index.md
 ```
 
 To prevent the about page showing up like a blog, just locate the front matter which is a section at the beginning of the page and remove the `date` entry:
 
-```
+```md
 ---
 title: "About Me"
 draft: false
@@ -59,13 +59,13 @@ draft: false
 
 To build the static web site locally, run:
 
-```
+```bash
 hugo server
 ```
 
 To include the draft pages, run:
 
-```
+```bash
 hugo server -D
 ```
 # Configuration
@@ -76,7 +76,7 @@ Most of the configurations are in the `config.toml` file. One first needs to fol
 
 Configuring the main menu is pretty straightforward. Just add several `[[menu.main]]` elements. The double square-bracket means array in toml.
 
-```
+```toml
 [[menu.main]]
 url = "/about"
 name = "About"
@@ -97,7 +97,7 @@ Hugo recognizes some of the urls like `posts` and `index.xml` out of the box whi
 
 Hugo supports several comment systems from free to paid. One of the easiest free ones is [utterance](https://utteranc.es/) which uses github issues to store comments. The configuration for utterance is:
 
-```
+```toml
 [params.utterances]
 repo="aspcompiler/aspcompiler.github.io"
 theme="github-light"
@@ -114,3 +114,19 @@ Dairy theme has a default [code highlighter](https://github.com/AmazingRise/hugo
 ## CI/CD
 
 To deploy to `site.github.io`, one has to configure github action to build the site. This is basically adding and config the page `.github/workflows/gh-pages.yml`. Follow the [instructions](https://gohugo.io/hosting-and-deployment/hosting-on-github/) from Hugo.  In `gh-pages.yml`, uncomment the line that says `extended: true`. After the github action runs successfully, go to github Settings -> Pages, under the `Build and deployment` section, change the branch to `gh-pages`. Then the pages should deploy to https://<USERNAME|ORGANIZATION>.github.io/.
+
+## Trying this site
+
+To try this site locally, follow the instructions above to install `Hugo` and its prerequisites. Then clone the projects:
+
+```bash
+git clone --recurse-submodules https://github.com/aspcompiler/aspcompiler.github.io.git
+cd aspcompiler.github.io
+hugo server
+```
+
+If the site is cloned with the `--recurse-submodules` argument, run the following after the fact:
+
+```bash
+git submodule update --init --recursive
+```
