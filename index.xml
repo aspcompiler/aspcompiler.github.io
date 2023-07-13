@@ -1,4 +1,73 @@
-<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Sat, 04 Feb 2023 14:42:43 -0800</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Getting Started With LLVM (1)</title><link>https://aspcompiler.github.io/posts/getting-started-with-llvm-1/</link><pubDate>Sat, 04 Feb 2023 14:42:43 -0800</pubDate><guid>https://aspcompiler.github.io/posts/getting-started-with-llvm-1/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/getting-started-with-llvm-1/ -&lt;h1 id="why-should-i-learn-llvm">Why should I learn LLVM?&lt;/h1>
+<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Wed, 12 Jul 2023 23:28:48 -0700</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Getting Started With LLVM (2)</title><link>https://aspcompiler.github.io/posts/getting-started-with-llvm-2/</link><pubDate>Wed, 12 Jul 2023 23:28:48 -0700</pubDate><guid>https://aspcompiler.github.io/posts/getting-started-with-llvm-2/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/getting-started-with-llvm-2/ -&lt;h1 id="introduction">Introduction&lt;/h1>
+&lt;p>In the previous &lt;a href="https://aspcompiler.github.io/posts/getting-started-with-llvm-1/">installation&lt;/a>, we provided a way to get started hands-on with LLVM with minimum effort. In this blog, we will follow the &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl03.html">chapter 3&lt;/a> and &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl04.html">chapter 4&lt;/a> of the LLVM tutorial to generate code.&lt;/p>
+&lt;p>Chapter 3 is about building the LLVM intermediate representation(IR) from the AST. Chapter 4 is about optimization passes as well as the just-in-time(JIT) compilation.&lt;/p>
+&lt;p>While the LLVM tutorials are very detailed, I will try to summarize the key points and provide some additional explanations.&lt;/p>
+&lt;p>Last note of caution is that the current stable distribution is LLVM 16 while the tutorial is already updated to the pre-release of LLVM 17. So if you have installed LLVM 16 binary rather than building from the source, you may encounter compatibility issues. If so, you should
+use the &lt;a href="https://github.com/llvm/llvm-project/tree/release/16.x/llvm/examples/Kaleidoscope">stable source&lt;/a> instead.&lt;/p>
+&lt;h1 id="building-the-llvm-ir">Building the LLVM IR&lt;/h1>
+&lt;p>The key for building the LLVM is to instantiate the &lt;code>TheContext&lt;/code>, &lt;code>Builder&lt;/code> and &lt;code>TheModule&lt;/code>. &lt;code>TheContext&lt;/code> is an opaque object that owns a lot of core LLVM data structures, such as the type and constant value tables. The &lt;code>Builder&lt;/code> object is a helper object that makes it easy to generate LLVM instructions. &lt;code>TheModule&lt;/code> is an LLVM construct that contains functions and global variables.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">static&lt;/span> std::unique_ptr&amp;lt;LLVMContext&amp;gt; TheContext;
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">static&lt;/span> std::unique_ptr&amp;lt;IRBuilder&amp;lt;&amp;gt;&amp;gt; Builder(TheContext);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">static&lt;/span> std::unique_ptr&amp;lt;Module&amp;gt; TheModule;
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Building the LLVM then follow several patterns:&lt;/p>
+&lt;ol>
+&lt;li>Getting from Context for type and constants mentioned above.&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>ConstantFP::get(*TheContext, APFloat(Val));
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>FunctionType *FT =
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, &lt;span style="color:#658b00">false&lt;/span>);
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ol start="2">
+&lt;li>Constructing using the Builder.&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>Builder-&amp;gt;CreateFAdd(L, R, &lt;span style="color:#cd5555">&amp;#34;addtmp&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Builder-&amp;gt;CreateCall(CalleeF, ArgsV, &lt;span style="color:#cd5555">&amp;#34;calltmp&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Builder-&amp;gt;SetInsertPoint(BB);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Builder-&amp;gt;CreateRet(RetVal);
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ol start="3">
+&lt;li>Create functions and basic blocks:&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>BasicBlock *BB = BasicBlock::Create(*TheContext, &lt;span style="color:#cd5555">&amp;#34;entry&amp;#34;&lt;/span>, F);
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Lastly, we can print the IR using the &lt;code>TheModule&lt;/code> object:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>TheModule-&amp;gt;print(errs(), &lt;span style="color:#8b008b;font-weight:bold">nullptr&lt;/span>);
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h1 id="optimization-passes">Optimization Passes&lt;/h1>
+&lt;p>The LLVM uses FunctionPassManager to manage the optimization passes. You can many built-in passes and create custom passes.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">// Create a new pass manager attached to it.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span> TheFPM = std::make_unique&amp;lt;legacy::FunctionPassManager&amp;gt;(TheModule.get());
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22">// Do simple &amp;#34;peephole&amp;#34; optimizations and bit-twiddling optzns.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span> TheFPM-&amp;gt;add(createInstructionCombiningPass());
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22">// Reassociate expressions.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span> TheFPM-&amp;gt;add(createReassociatePass());
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22">// Eliminate Common SubExpressions.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span> TheFPM-&amp;gt;add(createGVNPass());
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22">// Simplify the control flow graph (deleting unreachable blocks, etc).
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span> TheFPM-&amp;gt;add(createCFGSimplificationPass());
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> TheFPM-&amp;gt;doInitialization();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22">// Generate the IR
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22">// Optimize the function.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span> TheFPM-&amp;gt;run(*TheFunction);
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h1 id="jit-compilation">JIT Compilation&lt;/h1>
+&lt;p>To use the JIT compiler, it is necessary to initialize:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> InitializeNativeTarget();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> InitializeNativeTargetAsmPrinter();
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> InitializeNativeTargetAsmParser();
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Then set the data layout in the module:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> TheModule-&amp;gt;setDataLayout(TheJIT-&amp;gt;getTargetMachine().createDataLayout());
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Then we can use the JIT compiler to compile the module:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">auto&lt;/span> H = TheJIT-&amp;gt;addModule(std::move(TheModule));
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Then generate the &lt;code>TreadSafeModule&lt;/code> and add to the JIT.&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">auto&lt;/span> TSM = llvm::orc::ThreadSafeModule(std::move(TheModule), std::move(Context));
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">auto&lt;/span> H = TheJIT-&amp;gt;addModule(std::move(TSM));
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Lastly, get the function pointer of the top-level function and call it:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">auto&lt;/span> ExprSymbol = TheJIT-&amp;gt;lookup(&lt;span style="color:#cd5555">&amp;#34;__anon_expr&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> assert(ExprSymbol &amp;amp;&amp;amp; &lt;span style="color:#cd5555">&amp;#34;Function not found&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00688b;font-weight:bold">double&lt;/span> (*FP)() = (&lt;span style="color:#00688b;font-weight:bold">double&lt;/span> (*)())(intptr_t)cantFail(ExprSymbol.getAddress());
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fprintf(stderr, &lt;span style="color:#cd5555">&amp;#34;Evaluated to %f&lt;/span>&lt;span style="color:#cd5555">\n&lt;/span>&lt;span style="color:#cd5555">&amp;#34;&lt;/span>, FP());
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>- https://aspcompiler.github.io/posts/getting-started-with-llvm-2/ - 2023 Li Chen</description></item><item><title>Getting Started With LLVM (1)</title><link>https://aspcompiler.github.io/posts/getting-started-with-llvm-1/</link><pubDate>Sat, 04 Feb 2023 14:42:43 -0800</pubDate><guid>https://aspcompiler.github.io/posts/getting-started-with-llvm-1/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/getting-started-with-llvm-1/ -&lt;h1 id="why-should-i-learn-llvm">Why should I learn LLVM?&lt;/h1>
 &lt;p>According to ChatGPT, there are several reasons why you should learn the LLVM compiler framework:&lt;/p>
 &lt;ol>
 &lt;li>
