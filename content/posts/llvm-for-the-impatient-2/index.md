@@ -78,6 +78,8 @@ The LLVM uses FunctionPassManager to manage the optimization passes. You can man
   TheFPM->run(*TheFunction);
   ```
 
+LLVM has a large number of passes. You can find the list [here](https://llvm.org/docs/Passes.html).
+
 # JIT Compilation
 
 To use the JIT compiler, it is necessary to initialize:
