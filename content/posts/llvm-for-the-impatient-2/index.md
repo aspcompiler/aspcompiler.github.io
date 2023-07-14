@@ -1,5 +1,5 @@
 ---
-title: "Getting Started With LLVM (2)"
+title: "LLVM for the impatient (2)"
 date: 2023-07-12T23:28:48-07:00
 tags: ["LLVM"]
 categories: "LLVM"
@@ -8,7 +8,7 @@ draft: false
 
 # Introduction
 
-In the previous [installation](/posts/getting-started-with-llvm-1/), we provided a way to get started hands-on with LLVM with minimum effort. In this blog, we will follow the [chapter 3](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl03.html) and [chapter 4](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl04.html) of the LLVM tutorial to generate code.
+In the previous [installation](/posts/llvm-for-the-impatient-1/), we provided a way to get started hands-on with LLVM with minimum effort. In this blog, we will follow the [chapter 3](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl03.html) and [chapter 4](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl04.html) of the LLVM tutorial to generate code.
 
 Chapter 3 is about building the LLVM intermediate representation(IR) from the AST. Chapter 4 is about optimization passes as well as the just-in-time(JIT) compilation.
 
