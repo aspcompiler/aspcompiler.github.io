@@ -50,7 +50,8 @@ use the &lt;a href="https://github.com/llvm/llvm-project/tree/release/16.x/llvm/
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22">// Optimize the function.
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span> TheFPM-&amp;gt;run(*TheFunction);
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h1 id="jit-compilation">JIT Compilation&lt;/h1>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>LLVM has a large number of passes. You can find the list &lt;a href="https://llvm.org/docs/Passes.html">here&lt;/a>.&lt;/p>
+&lt;h1 id="jit-compilation">JIT Compilation&lt;/h1>
 &lt;p>To use the JIT compiler, it is necessary to initialize:&lt;/p>
 &lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> InitializeNativeTarget();
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> InitializeNativeTargetAsmPrinter();
