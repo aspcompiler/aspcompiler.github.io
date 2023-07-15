@@ -1,4 +1,137 @@
-<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Wed, 12 Jul 2023 23:28:48 -0700</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>LLVM for the impatient (2)</title><link>https://aspcompiler.github.io/posts/llvm-for-the-impatient-2/</link><pubDate>Wed, 12 Jul 2023 23:28:48 -0700</pubDate><guid>https://aspcompiler.github.io/posts/llvm-for-the-impatient-2/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/llvm-for-the-impatient-2/ -&lt;h1 id="introduction">Introduction&lt;/h1>
+<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Fri, 14 Jul 2023 15:43:15 -0700</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>The speed of gRPC Python is very impressive and that deserves a dive</title><link>https://aspcompiler.github.io/posts/grpc-python-is-fast/</link><pubDate>Fri, 14 Jul 2023 15:43:15 -0700</pubDate><guid>https://aspcompiler.github.io/posts/grpc-python-is-fast/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/grpc-python-is-fast/ -&lt;h1 id="intro">Intro&lt;/h1>
+&lt;p>Recently, I did a small experiment to compare the &lt;a href="https://github.com/aspcompiler/grpc-perf">performance&lt;/a> of gRPC Python and other languages. The result is very impressive. I would expect to see a interpreted code many times slower than a native code. Intuitively, this can only happen if the code is mostly native. Let us dive in to see how it was implemented.&lt;/p>
+&lt;h1 id="grpc-python-implementation">gRPC Python implementation&lt;/h1>
+&lt;p>gRPC has 2 major parts. Its serializer is built upon &lt;a href="https://github.com/protocolbuffers/protobuf">protobuf&lt;/a>. The RPC part is built upon HTTP/2.&lt;/p>
+&lt;p>The gRPC project is driven by the RFP process. gRPC Python has the following RFPs:&lt;/p>
+&lt;ul>
+&lt;li>
+&lt;p>L13 &lt;a href="https://github.com/grpc/proposal/blob/master/L13-python-interceptors.md">https://github.com/grpc/proposal/blob/master/L13-python-interceptors.md&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>L42 &lt;a href="https://github.com/grpc/proposal/blob/master/L42-python-metadata-flags.md">https://github.com/grpc/proposal/blob/master/L42-python-metadata-flags.md&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>L44 &lt;a href="https://github.com/grpc/proposal/blob/master/L44-python-rich-status.md">https://github.com/grpc/proposal/blob/master/L44-python-rich-status.md&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>L46 &lt;a href="https://github.com/grpc/proposal/blob/master/L46-python-compression-api.md">https://github.com/grpc/proposal/blob/master/L46-python-compression-api.md&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>L54 &lt;a href="https://github.com/grpc/proposal/blob/master/L54-python-server-wait.md">https://github.com/grpc/proposal/blob/master/L54-python-server-wait.md&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>L58 &lt;a href="https://github.com/grpc/proposal/blob/master/L58-python-async-api.md">https://github.com/grpc/proposal/blob/master/L58-python-async-api.md&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>L64 &lt;a href="https://github.com/grpc/proposal/blob/master/L64-python-runtime-proto-parsing.md">https://github.com/grpc/proposal/blob/master/L64-python-runtime-proto-parsing.md&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>L65 &lt;a href="https://github.com/grpc/proposal/blob/master/L65-python-package-name.md">https://github.com/grpc/proposal/blob/master/L65-python-package-name.md&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>L78 &lt;a href="https://github.com/grpc/proposal/blob/master/L78-python-rich-server-context.md">https://github.com/grpc/proposal/blob/master/L78-python-rich-server-context.md&lt;/a>&lt;/p>
+&lt;/li>
+&lt;li>
+&lt;p>L95 &lt;a href="https://github.com/grpc/proposal/blob/master/L95-python-reflection-client.md">https://github.com/grpc/proposal/blob/master/L95-python-reflection-client.md&lt;/a>&lt;/p>
+&lt;/li>
+&lt;/ul>
+&lt;p>Out of them, L58 and L64 are the most interesting one. L58 is the async API. L64 is the runtime proto parsing. They are the core of the implementation.&lt;/p>
+&lt;h1 id="async-api">Async API&lt;/h1>
+&lt;p>L58 is a great document that is fun to read.&lt;/p>
+&lt;p>The most interesting part of &lt;code>grpcio&lt;/code>, the async Python gRPC API, is that it is a wrapper over the gRPC C++ API but used the Python async model. It other words, it does not use the Python networking stack but used the networking stack of the C++ API. How are they married together?&lt;/p>
+&lt;p>It turns out that the C++ API has a &lt;a href="https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html">CompletionQueue&lt;/a> interface. It allow
+the clients to &lt;a href="https://grpc.io/docs/languages/cpp/async/">poll for the completion status with tag&lt;/a>.&lt;/p>
+&lt;p>Any async framework requires a mechanism to yield control. Python uses &lt;a href="https://stackoverflow.com/questions/49005651/how-does-asyncio-actually-work">generator to yield&lt;/a>. Therefore, we can imaging that the wrapper just need to poll the completion queue and yield the results in the generator.&lt;/p>
+&lt;p>The result is a very elegant API that allows users to implement a streaming server with extreme simplicity:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">class&lt;/span> &lt;span style="color:#008b45;font-weight:bold">Greeter&lt;/span>(helloworld_pb2_grpc.GreeterServicer):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">async&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> &lt;span style="color:#008b45">StreamingHi&lt;/span>(self, request_iterator, context):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">async&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> request &lt;span style="color:#8b008b">in&lt;/span> request_iterator:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">yield&lt;/span> response
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>asyncio&lt;/code> is integrated C++ API using &lt;a href="https://cython.org/">Cython&lt;/a>.&lt;/p>
+&lt;h1 id="cython">Cython&lt;/h1>
+&lt;p>I was previously not familiar with Cython. I thought it is just a Python to C++ compiler. Many of the integrations that I have seen
+where implemented using &lt;a href="https://github.com/pybind/pybind11">pybind11&lt;/a> for Python/C++ binding or &lt;a href="https://github.com/PyO3/pyo3">pyo3&lt;/a>
+for Python/Rust binding.&lt;/p>
+&lt;p>It turns out that Cython is also very interesting. It is a very old project dating back to 15 years ago. It has 2 syntaxes, one with the .pyx extension and the other with the .pxd extension.&lt;/p>
+&lt;p>The .pyx extension is a superset of Python. It allows us to add type hints to Python so that it can generate good C++ code; remember that Python
+did not have type hints 15 years ago so that .pyx extension was invented to define the Python interface.&lt;/p>
+&lt;p>The .pxd extension allows us to export C++ API to Python.&lt;/p>
+&lt;p>The 2 extensions are sometimes used together to allow Python and C++ to meet half way. The tool then generates C++ code that can be compiled into a Python extension. We can inspect the generated code.&lt;/p>
+&lt;h1 id="protobuf">Protobuf&lt;/h1>
+&lt;p>&lt;code>asyncio&lt;/code> uses the same Protobuf code as the sync code. This implementation uses the C++ protobuf runtime already built into the grpcio-tools C extension to parse the protocol buffers and generate textual Python code in memory. This code is then used to instantiate the modules to be provided to the calling application. This will be more clear when we look at the generated files.&lt;/p>
+&lt;h1 id="generated-files">Generated files&lt;/h1>
+&lt;p>The code generated from the proto file looks like:&lt;/p>
+&lt;ul>
+&lt;li>server_streaming_pb2.pyi&lt;/li>
+&lt;li>server_streaming_pb2.py&lt;/li>
+&lt;li>server_streaming_pb2_grpc.py&lt;/li>
+&lt;/ul>
+&lt;p>The first 2 files are for protobuf. The last one is for gRPC.&lt;/p>
+&lt;p>&lt;code>server_streaming_pb2.pyi&lt;/code> looks like:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">class&lt;/span> &lt;span style="color:#008b45;font-weight:bold">StreamingFromServerRequest&lt;/span>(_message.Message):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __slots__ = [&lt;span style="color:#cd5555">&amp;#34;num_bytes&amp;#34;&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> NUM_BYTES_FIELD_NUMBER: _ClassVar[&lt;span style="color:#658b00">int&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> num_bytes: &lt;span style="color:#658b00">int&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> __init__(self, num_bytes: _Optional[&lt;span style="color:#658b00">int&lt;/span>] = ...) -&amp;gt; &lt;span style="color:#8b008b;font-weight:bold">None&lt;/span>: ...
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">class&lt;/span> &lt;span style="color:#008b45;font-weight:bold">StreamingFromServerResponse&lt;/span>(_message.Message):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __slots__ = [&lt;span style="color:#cd5555">&amp;#34;data&amp;#34;&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> DATA_FIELD_NUMBER: _ClassVar[&lt;span style="color:#658b00">int&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> data: &lt;span style="color:#658b00">bytes&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> __init__(self, data: _Optional[&lt;span style="color:#658b00">bytes&lt;/span>] = ...) -&amp;gt; &lt;span style="color:#8b008b;font-weight:bold">None&lt;/span>: ...
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Note that it just define the interface for Python tools to use. It does not contain any implementation. The implementation is in
+&lt;code> server_streaming_pb2.py&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(&lt;span style="color:#cd5555">b&lt;/span>&lt;span style="color:#cd5555">&amp;#39;&lt;/span>&lt;span style="color:#cd5555">\n\x16&lt;/span>&lt;span style="color:#cd5555">server_streaming.proto&lt;/span>&lt;span style="color:#cd5555">\x12\x10&lt;/span>&lt;span style="color:#cd5555">server_streaming&lt;/span>&lt;span style="color:#cd5555">\&amp;#34;&lt;/span>&lt;span style="color:#cd5555">/&lt;/span>&lt;span style="color:#cd5555">\n\x1a&lt;/span>&lt;span style="color:#cd5555">StreamingFromServerRequest&lt;/span>&lt;span style="color:#cd5555">\x12\x11\n\t&lt;/span>&lt;span style="color:#cd5555">num_bytes&lt;/span>&lt;span style="color:#cd5555">\x18\x01&lt;/span>&lt;span style="color:#cd5555"> &lt;/span>&lt;span style="color:#cd5555">\x01&lt;/span>&lt;span style="color:#cd5555">(&lt;/span>&lt;span style="color:#cd5555">\x05\&amp;#34;&lt;/span>&lt;span style="color:#cd5555">+&lt;/span>&lt;span style="color:#cd5555">\n\x1b&lt;/span>&lt;span style="color:#cd5555">StreamingFromServerResponse&lt;/span>&lt;span style="color:#cd5555">\x12\x0c\n\x04\x64\x61&lt;/span>&lt;span style="color:#cd5555">ta&lt;/span>&lt;span style="color:#cd5555">\x18\x01&lt;/span>&lt;span style="color:#cd5555"> &lt;/span>&lt;span style="color:#cd5555">\x01&lt;/span>&lt;span style="color:#cd5555">(&lt;/span>&lt;span style="color:#cd5555">\x0c\x32\x87\x01\n\x0f&lt;/span>&lt;span style="color:#cd5555">ServerStreaming&lt;/span>&lt;span style="color:#cd5555">\x12&lt;/span>&lt;span style="color:#cd5555">t&lt;/span>&lt;span style="color:#cd5555">\n\x13&lt;/span>&lt;span style="color:#cd5555">StreamingFromServer&lt;/span>&lt;span style="color:#cd5555">\x12&lt;/span>&lt;span style="color:#cd5555">,.server_streaming.StreamingFromServerRequest&lt;/span>&lt;span style="color:#cd5555">\x1a&lt;/span>&lt;span style="color:#cd5555">-.server_streaming.StreamingFromServerResponse0&lt;/span>&lt;span style="color:#cd5555">\x01\x62\x06&lt;/span>&lt;span style="color:#cd5555">proto3&amp;#39;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>_globals = &lt;span style="color:#658b00">globals&lt;/span>()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, &lt;span style="color:#cd5555">&amp;#39;server_streaming_pb2&amp;#39;&lt;/span>, _globals)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">if&lt;/span> _descriptor._USE_C_DESCRIPTORS == &lt;span style="color:#8b008b;font-weight:bold">False&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> DESCRIPTOR._options = &lt;span style="color:#8b008b;font-weight:bold">None&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _globals[&lt;span style="color:#cd5555">&amp;#39;_STREAMINGFROMSERVERREQUEST&amp;#39;&lt;/span>]._serialized_start=&lt;span style="color:#b452cd">44&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _globals[&lt;span style="color:#cd5555">&amp;#39;_STREAMINGFROMSERVERREQUEST&amp;#39;&lt;/span>]._serialized_end=&lt;span style="color:#b452cd">91&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _globals[&lt;span style="color:#cd5555">&amp;#39;_STREAMINGFROMSERVERRESPONSE&amp;#39;&lt;/span>]._serialized_start=&lt;span style="color:#b452cd">93&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _globals[&lt;span style="color:#cd5555">&amp;#39;_STREAMINGFROMSERVERRESPONSE&amp;#39;&lt;/span>]._serialized_end=&lt;span style="color:#b452cd">136&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _globals[&lt;span style="color:#cd5555">&amp;#39;_SERVERSTREAMING&amp;#39;&lt;/span>]._serialized_start=&lt;span style="color:#b452cd">139&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _globals[&lt;span style="color:#cd5555">&amp;#39;_SERVERSTREAMING&amp;#39;&lt;/span>]._serialized_end=&lt;span style="color:#b452cd">274&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This is not quite readable, but we can imagine that it just deserialize some data and load into the C++ code. The C++ code
+then have the data structures needed to parse the protocol buffers.&lt;/p>
+&lt;p>Let us now look at the gRPC code &lt;code>server_streaming_pb2_grpc.py&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">class&lt;/span> &lt;span style="color:#008b45;font-weight:bold">ServerStreaming&lt;/span>(&lt;span style="color:#658b00">object&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#cd5555">&amp;#34;&amp;#34;&amp;#34;Missing associated documentation comment in .proto file.&amp;#34;&amp;#34;&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#707a7c">@staticmethod&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> &lt;span style="color:#008b45">StreamingFromServer&lt;/span>(request,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> target,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> options=(),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> channel_credentials=&lt;span style="color:#8b008b;font-weight:bold">None&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> call_credentials=&lt;span style="color:#8b008b;font-weight:bold">None&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> insecure=&lt;span style="color:#8b008b;font-weight:bold">False&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> compression=&lt;span style="color:#8b008b;font-weight:bold">None&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> wait_for_ready=&lt;span style="color:#8b008b;font-weight:bold">None&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> timeout=&lt;span style="color:#8b008b;font-weight:bold">None&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> metadata=&lt;span style="color:#8b008b;font-weight:bold">None&lt;/span>):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">return&lt;/span> grpc.experimental.unary_stream(request, target, &lt;span style="color:#cd5555">&amp;#39;/server_streaming.ServerStreaming/StreamingFromServer&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> server__streaming__pb2.StreamingFromServerRequest.SerializeToString,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> server__streaming__pb2.StreamingFromServerResponse.FromString,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> options, channel_credentials,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>As we can see, it calls &lt;code>grpc.experimental.unary_stream&lt;/code> and passes the serializer/deserializer from the protobuf code. The &lt;code>unary_stream&lt;/code> is because this method happen to be a unary stream call. Other possible calls unary unary, stream unary, and stream stream.&lt;/p>
+&lt;p>Isn&amp;rsquo;t this implementation very elegant?&lt;/p>
+&lt;h1 id="some-more-details">Some more details&lt;/h1>
+&lt;p>It turns out there are several C++ protobuf implementations. We can find out which one is used by running the following code:&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a61717;background-color:#e3d2d2">$&lt;/span> python
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Python &lt;span style="color:#b452cd">3.10.9&lt;/span> (main, Dec &lt;span style="color:#b452cd">7&lt;/span> &lt;span style="color:#b452cd">2022&lt;/span>, &lt;span style="color:#b452cd">13&lt;/span>:&lt;span style="color:#b452cd">47&lt;/span>:&lt;span style="color:#b452cd">07&lt;/span>) [GCC &lt;span style="color:#b452cd">12.2.0&lt;/span>] on linux
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Type &lt;span style="color:#cd5555">&amp;#34;help&amp;#34;&lt;/span>, &lt;span style="color:#cd5555">&amp;#34;copyright&amp;#34;&lt;/span>, &lt;span style="color:#cd5555">&amp;#34;credits&amp;#34;&lt;/span> &lt;span style="color:#8b008b">or&lt;/span> &lt;span style="color:#cd5555">&amp;#34;license&amp;#34;&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> more information.
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&amp;gt;&amp;gt;&amp;gt; &lt;span style="color:#8b008b;font-weight:bold">from&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">google.protobuf.internal&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">import&lt;/span> api_implementation
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&amp;gt;&amp;gt;&amp;gt; &lt;span style="color:#658b00">print&lt;/span>(api_implementation.Type())
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>upb
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Upc is currently Preferred. We can find more details from &lt;a href="https://github.com/protocolbuffers/upb/tree/main/python">https://github.com/protocolbuffers/upb/tree/main/python&lt;/a>&lt;/p>
+&lt;h1 id="conclusion">Conclusion&lt;/h1>
+&lt;p>gRPC Python is extremely fast because it is mostly built around the C++ API.&lt;/p>
+&lt;p>The implementation using Cython is very elegant and we can borrow the idea to speed up our own Python code.&lt;/p>
+- https://aspcompiler.github.io/posts/grpc-python-is-fast/ - 2023 Li Chen</description></item><item><title>LLVM for the impatient (2)</title><link>https://aspcompiler.github.io/posts/llvm-for-the-impatient-2/</link><pubDate>Wed, 12 Jul 2023 23:28:48 -0700</pubDate><guid>https://aspcompiler.github.io/posts/llvm-for-the-impatient-2/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/llvm-for-the-impatient-2/ -&lt;h1 id="introduction">Introduction&lt;/h1>
 &lt;p>In the previous &lt;a href="https://aspcompiler.github.io/posts/llvm-for-the-impatient-1/">installation&lt;/a>, we provided a way to get started hands-on with LLVM with minimum effort. In this blog, we will follow the &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl03.html">chapter 3&lt;/a> and &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl04.html">chapter 4&lt;/a> of the LLVM tutorial to generate code.&lt;/p>
 &lt;p>Chapter 3 is about building the LLVM intermediate representation(IR) from the AST. Chapter 4 is about optimization passes as well as the just-in-time(JIT) compilation.&lt;/p>
 &lt;p>While the LLVM tutorials are very detailed, I will try to summarize the key points and provide some additional explanations.&lt;/p>
