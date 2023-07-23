@@ -43,11 +43,21 @@
 the clients to &lt;a href="https://grpc.io/docs/languages/cpp/async/">poll for the completion status with tag&lt;/a>.&lt;/p>
 &lt;p>Any async framework requires a mechanism to yield control. Python uses &lt;a href="https://stackoverflow.com/questions/49005651/how-does-asyncio-actually-work">generator to yield&lt;/a>. Therefore, we can imaging that the wrapper just need to poll the completion queue and yield the results in the generator.&lt;/p>
 &lt;p>The result is a very elegant API that allows users to implement a streaming server with extreme simplicity:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">class&lt;/span> &lt;span style="color:#008b45;font-weight:bold">Greeter&lt;/span>(helloworld_pb2_grpc.GreeterServicer):
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">class&lt;/span> &lt;span style="color:#008b45;font-weight:bold">Greeter&lt;/span>(helloworld_pb2_grpc.GreeterServicer):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">async&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> &lt;span style="color:#008b45">StreamingHi&lt;/span>(self, request_iterator, context):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">async&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> request &lt;span style="color:#8b008b">in&lt;/span> request_iterator:
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">yield&lt;/span> response
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;code>asyncio&lt;/code> is integrated C++ API using &lt;a href="https://cython.org/">Cython&lt;/a>.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;code>asyncio&lt;/code> is integrated C++ API using &lt;a href="https://cython.org/">Cython&lt;/a>.&lt;/p>
 &lt;h1 id="cython">Cython&lt;/h1>
 &lt;p>I was previously not familiar with Cython. I thought it is just a Python to C++ compiler. Many of the integrations that I have seen
 where implemented using &lt;a href="https://github.com/pybind/pybind11">pybind11&lt;/a> for Python/C++ binding or &lt;a href="https://github.com/PyO3/pyo3">pyo3&lt;/a>
@@ -68,7 +78,22 @@ did not have type hints 15 years ago so that .pyx extension was invented to defi
 &lt;/ul>
 &lt;p>The first 2 files are for protobuf. The last one is for gRPC.&lt;/p>
 &lt;p>&lt;code>server_streaming_pb2.pyi&lt;/code> looks like:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">class&lt;/span> &lt;span style="color:#008b45;font-weight:bold">StreamingFromServerRequest&lt;/span>(_message.Message):
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">class&lt;/span> &lt;span style="color:#008b45;font-weight:bold">StreamingFromServerRequest&lt;/span>(_message.Message):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> __slots__ = [&lt;span style="color:#cd5555">&amp;#34;num_bytes&amp;#34;&lt;/span>]
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> NUM_BYTES_FIELD_NUMBER: _ClassVar[&lt;span style="color:#658b00">int&lt;/span>]
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> num_bytes: &lt;span style="color:#658b00">int&lt;/span>
@@ -79,9 +104,29 @@ did not have type hints 15 years ago so that .pyx extension was invented to defi
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> DATA_FIELD_NUMBER: _ClassVar[&lt;span style="color:#658b00">int&lt;/span>]
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> data: &lt;span style="color:#658b00">bytes&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> __init__(self, data: _Optional[&lt;span style="color:#658b00">bytes&lt;/span>] = ...) -&amp;gt; &lt;span style="color:#8b008b;font-weight:bold">None&lt;/span>: ...
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Note that it just define the interface for Python tools to use. It does not contain any implementation. The implementation is in
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Note that it just define the interface for Python tools to use. It does not contain any implementation. The implementation is in
 &lt;code> server_streaming_pb2.py&lt;/code>:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(&lt;span style="color:#cd5555">b&lt;/span>&lt;span style="color:#cd5555">&amp;#39;&lt;/span>&lt;span style="color:#cd5555">\n\x16&lt;/span>&lt;span style="color:#cd5555">server_streaming.proto&lt;/span>&lt;span style="color:#cd5555">\x12\x10&lt;/span>&lt;span style="color:#cd5555">server_streaming&lt;/span>&lt;span style="color:#cd5555">\&amp;#34;&lt;/span>&lt;span style="color:#cd5555">/&lt;/span>&lt;span style="color:#cd5555">\n\x1a&lt;/span>&lt;span style="color:#cd5555">StreamingFromServerRequest&lt;/span>&lt;span style="color:#cd5555">\x12\x11\n\t&lt;/span>&lt;span style="color:#cd5555">num_bytes&lt;/span>&lt;span style="color:#cd5555">\x18\x01&lt;/span>&lt;span style="color:#cd5555"> &lt;/span>&lt;span style="color:#cd5555">\x01&lt;/span>&lt;span style="color:#cd5555">(&lt;/span>&lt;span style="color:#cd5555">\x05\&amp;#34;&lt;/span>&lt;span style="color:#cd5555">+&lt;/span>&lt;span style="color:#cd5555">\n\x1b&lt;/span>&lt;span style="color:#cd5555">StreamingFromServerResponse&lt;/span>&lt;span style="color:#cd5555">\x12\x0c\n\x04\x64\x61&lt;/span>&lt;span style="color:#cd5555">ta&lt;/span>&lt;span style="color:#cd5555">\x18\x01&lt;/span>&lt;span style="color:#cd5555"> &lt;/span>&lt;span style="color:#cd5555">\x01&lt;/span>&lt;span style="color:#cd5555">(&lt;/span>&lt;span style="color:#cd5555">\x0c\x32\x87\x01\n\x0f&lt;/span>&lt;span style="color:#cd5555">ServerStreaming&lt;/span>&lt;span style="color:#cd5555">\x12&lt;/span>&lt;span style="color:#cd5555">t&lt;/span>&lt;span style="color:#cd5555">\n\x13&lt;/span>&lt;span style="color:#cd5555">StreamingFromServer&lt;/span>&lt;span style="color:#cd5555">\x12&lt;/span>&lt;span style="color:#cd5555">,.server_streaming.StreamingFromServerRequest&lt;/span>&lt;span style="color:#cd5555">\x1a&lt;/span>&lt;span style="color:#cd5555">-.server_streaming.StreamingFromServerResponse0&lt;/span>&lt;span style="color:#cd5555">\x01\x62\x06&lt;/span>&lt;span style="color:#cd5555">proto3&amp;#39;&lt;/span>)
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(&lt;span style="color:#cd5555">b&lt;/span>&lt;span style="color:#cd5555">&amp;#39;&lt;/span>&lt;span style="color:#cd5555">\n\x16&lt;/span>&lt;span style="color:#cd5555">server_streaming.proto&lt;/span>&lt;span style="color:#cd5555">\x12\x10&lt;/span>&lt;span style="color:#cd5555">server_streaming&lt;/span>&lt;span style="color:#cd5555">\&amp;#34;&lt;/span>&lt;span style="color:#cd5555">/&lt;/span>&lt;span style="color:#cd5555">\n\x1a&lt;/span>&lt;span style="color:#cd5555">StreamingFromServerRequest&lt;/span>&lt;span style="color:#cd5555">\x12\x11\n\t&lt;/span>&lt;span style="color:#cd5555">num_bytes&lt;/span>&lt;span style="color:#cd5555">\x18\x01&lt;/span>&lt;span style="color:#cd5555"> &lt;/span>&lt;span style="color:#cd5555">\x01&lt;/span>&lt;span style="color:#cd5555">(&lt;/span>&lt;span style="color:#cd5555">\x05\&amp;#34;&lt;/span>&lt;span style="color:#cd5555">+&lt;/span>&lt;span style="color:#cd5555">\n\x1b&lt;/span>&lt;span style="color:#cd5555">StreamingFromServerResponse&lt;/span>&lt;span style="color:#cd5555">\x12\x0c\n\x04\x64\x61&lt;/span>&lt;span style="color:#cd5555">ta&lt;/span>&lt;span style="color:#cd5555">\x18\x01&lt;/span>&lt;span style="color:#cd5555"> &lt;/span>&lt;span style="color:#cd5555">\x01&lt;/span>&lt;span style="color:#cd5555">(&lt;/span>&lt;span style="color:#cd5555">\x0c\x32\x87\x01\n\x0f&lt;/span>&lt;span style="color:#cd5555">ServerStreaming&lt;/span>&lt;span style="color:#cd5555">\x12&lt;/span>&lt;span style="color:#cd5555">t&lt;/span>&lt;span style="color:#cd5555">\n\x13&lt;/span>&lt;span style="color:#cd5555">StreamingFromServer&lt;/span>&lt;span style="color:#cd5555">\x12&lt;/span>&lt;span style="color:#cd5555">,.server_streaming.StreamingFromServerRequest&lt;/span>&lt;span style="color:#cd5555">\x1a&lt;/span>&lt;span style="color:#cd5555">-.server_streaming.StreamingFromServerResponse0&lt;/span>&lt;span style="color:#cd5555">\x01\x62\x06&lt;/span>&lt;span style="color:#cd5555">proto3&amp;#39;&lt;/span>)
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>_globals = &lt;span style="color:#658b00">globals&lt;/span>()
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -95,10 +140,35 @@ did not have type hints 15 years ago so that .pyx extension was invented to defi
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _globals[&lt;span style="color:#cd5555">&amp;#39;_STREAMINGFROMSERVERRESPONSE&amp;#39;&lt;/span>]._serialized_end=&lt;span style="color:#b452cd">136&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _globals[&lt;span style="color:#cd5555">&amp;#39;_SERVERSTREAMING&amp;#39;&lt;/span>]._serialized_start=&lt;span style="color:#b452cd">139&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> _globals[&lt;span style="color:#cd5555">&amp;#39;_SERVERSTREAMING&amp;#39;&lt;/span>]._serialized_end=&lt;span style="color:#b452cd">274&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>This is not quite readable, but we can imagine that it just deserialize some data and load into the C++ code. The C++ code
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>This is not quite readable, but we can imagine that it just deserialize some data and load into the C++ code. The C++ code
 then have the data structures needed to parse the protocol buffers.&lt;/p>
 &lt;p>Let us now look at the gRPC code &lt;code>server_streaming_pb2_grpc.py&lt;/code>:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">class&lt;/span> &lt;span style="color:#008b45;font-weight:bold">ServerStreaming&lt;/span>(&lt;span style="color:#658b00">object&lt;/span>):
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">class&lt;/span> &lt;span style="color:#008b45;font-weight:bold">ServerStreaming&lt;/span>(&lt;span style="color:#658b00">object&lt;/span>):
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#cd5555">&amp;#34;&amp;#34;&amp;#34;Missing associated documentation comment in .proto file.&amp;#34;&amp;#34;&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#707a7c">@staticmethod&lt;/span>
@@ -117,17 +187,31 @@ then have the data structures needed to parse the protocol buffers.&lt;/p>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> server__streaming__pb2.StreamingFromServerResponse.FromString,
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> options, channel_credentials,
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>As we can see, it calls &lt;code>grpc.experimental.unary_stream&lt;/code> and passes the serializer/deserializer from the protobuf code. The &lt;code>unary_stream&lt;/code> is because this method happen to be a unary stream call. Other possible calls unary unary, stream unary, and stream stream.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>As we can see, it calls &lt;code>grpc.experimental.unary_stream&lt;/code> and passes the serializer/deserializer from the protobuf code. The &lt;code>unary_stream&lt;/code> is because this method happen to be a unary stream call. Other possible calls unary unary, stream unary, and stream stream.&lt;/p>
 &lt;p>Isn&amp;rsquo;t this implementation very elegant?&lt;/p>
 &lt;h1 id="some-more-details">Some more details&lt;/h1>
 &lt;p>It turns out there are several C++ protobuf implementations. We can find out which one is used by running the following code:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a61717;background-color:#e3d2d2">$&lt;/span> python
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#a61717;background-color:#e3d2d2">$&lt;/span> python
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Python &lt;span style="color:#b452cd">3.10.9&lt;/span> (main, Dec &lt;span style="color:#b452cd">7&lt;/span> &lt;span style="color:#b452cd">2022&lt;/span>, &lt;span style="color:#b452cd">13&lt;/span>:&lt;span style="color:#b452cd">47&lt;/span>:&lt;span style="color:#b452cd">07&lt;/span>) [GCC &lt;span style="color:#b452cd">12.2.0&lt;/span>] on linux
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Type &lt;span style="color:#cd5555">&amp;#34;help&amp;#34;&lt;/span>, &lt;span style="color:#cd5555">&amp;#34;copyright&amp;#34;&lt;/span>, &lt;span style="color:#cd5555">&amp;#34;credits&amp;#34;&lt;/span> &lt;span style="color:#8b008b">or&lt;/span> &lt;span style="color:#cd5555">&amp;#34;license&amp;#34;&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> more information.
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&amp;gt;&amp;gt;&amp;gt; &lt;span style="color:#8b008b;font-weight:bold">from&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">google.protobuf.internal&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">import&lt;/span> api_implementation
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&amp;gt;&amp;gt;&amp;gt; &lt;span style="color:#658b00">print&lt;/span>(api_implementation.Type())
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>upb
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Upc is currently Preferred. We can find more details from &lt;a href="https://github.com/protocolbuffers/upb/tree/main/python">https://github.com/protocolbuffers/upb/tree/main/python&lt;/a>&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Upc is currently Preferred. We can find more details from &lt;a href="https://github.com/protocolbuffers/upb/tree/main/python">https://github.com/protocolbuffers/upb/tree/main/python&lt;/a>&lt;/p>
 &lt;h1 id="conclusion">Conclusion&lt;/h1>
 &lt;p>gRPC Python is extremely fast because it is mostly built around the C++ API.&lt;/p>
 &lt;p>The implementation using Cython is very elegant and we can borrow the idea to speed up our own Python code.&lt;/p>
@@ -139,33 +223,98 @@ then have the data structures needed to parse the protocol buffers.&lt;/p>
 use the &lt;a href="https://github.com/llvm/llvm-project/tree/release/16.x/llvm/examples/Kaleidoscope">stable source&lt;/a> instead.&lt;/p>
 &lt;h1 id="building-the-llvm-ir">Building the LLVM IR&lt;/h1>
 &lt;p>The key for building the LLVM is to instantiate the &lt;code>TheContext&lt;/code>, &lt;code>Builder&lt;/code> and &lt;code>TheModule&lt;/code>. &lt;code>TheContext&lt;/code> is an opaque object that owns a lot of core LLVM data structures, such as the type and constant value tables. The &lt;code>Builder&lt;/code> object is a helper object that makes it easy to generate LLVM instructions. &lt;code>TheModule&lt;/code> is an LLVM construct that contains functions and global variables.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">static&lt;/span> std::unique_ptr&amp;lt;LLVMContext&amp;gt; TheContext;
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">static&lt;/span> std::unique_ptr&amp;lt;LLVMContext&amp;gt; TheContext;
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">static&lt;/span> std::unique_ptr&amp;lt;IRBuilder&amp;lt;&amp;gt;&amp;gt; Builder(TheContext);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">static&lt;/span> std::unique_ptr&amp;lt;Module&amp;gt; TheModule;
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Building the LLVM then follow several patterns:&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Building the LLVM then follow several patterns:&lt;/p>
 &lt;ol>
 &lt;li>Getting from Context for type and constants mentioned above.&lt;/li>
 &lt;/ol>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>ConstantFP::get(*TheContext, APFloat(Val));
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>ConstantFP::get(*TheContext, APFloat(Val));
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>FunctionType *FT =
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, &lt;span style="color:#658b00">false&lt;/span>);
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ol start="2">
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ol start="2">
 &lt;li>Constructing using the Builder.&lt;/li>
 &lt;/ol>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>Builder-&amp;gt;CreateFAdd(L, R, &lt;span style="color:#cd5555">&amp;#34;addtmp&amp;#34;&lt;/span>);
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>Builder-&amp;gt;CreateFAdd(L, R, &lt;span style="color:#cd5555">&amp;#34;addtmp&amp;#34;&lt;/span>);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Builder-&amp;gt;CreateCall(CalleeF, ArgsV, &lt;span style="color:#cd5555">&amp;#34;calltmp&amp;#34;&lt;/span>);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Builder-&amp;gt;SetInsertPoint(BB);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Builder-&amp;gt;CreateRet(RetVal);
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;ol start="3">
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ol start="3">
 &lt;li>Create functions and basic blocks:&lt;/li>
 &lt;/ol>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>BasicBlock *BB = BasicBlock::Create(*TheContext, &lt;span style="color:#cd5555">&amp;#34;entry&amp;#34;&lt;/span>, F);
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Lastly, we can print the IR using the &lt;code>TheModule&lt;/code> object:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>TheModule-&amp;gt;print(errs(), &lt;span style="color:#8b008b;font-weight:bold">nullptr&lt;/span>);
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h1 id="optimization-passes">Optimization Passes&lt;/h1>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Lastly, we can print the IR using the &lt;code>TheModule&lt;/code> object:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>TheModule-&amp;gt;print(errs(), &lt;span style="color:#8b008b;font-weight:bold">nullptr&lt;/span>);
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h1 id="optimization-passes">Optimization Passes&lt;/h1>
 &lt;p>The LLVM uses FunctionPassManager to manage the optimization passes. You can many built-in passes and create custom passes.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">// Create a new pass manager attached to it.
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">// Create a new pass manager attached to it.
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span> TheFPM = std::make_unique&amp;lt;legacy::FunctionPassManager&amp;gt;(TheModule.get());
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22">// Do simple &amp;#34;peephole&amp;#34; optimizations and bit-twiddling optzns.
@@ -183,52 +332,171 @@ use the &lt;a href="https://github.com/llvm/llvm-project/tree/release/16.x/llvm/
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22">// Optimize the function.
 &lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span> TheFPM-&amp;gt;run(*TheFunction);
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>LLVM has a large number of passes. You can find the list &lt;a href="https://llvm.org/docs/Passes.html">here&lt;/a>.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>LLVM has a large number of passes. You can find the list &lt;a href="https://llvm.org/docs/Passes.html">here&lt;/a>.&lt;/p>
 &lt;h1 id="jit-compilation">JIT Compilation&lt;/h1>
 &lt;p>To use the JIT compiler, it is necessary to initialize:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> InitializeNativeTarget();
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> InitializeNativeTarget();
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> InitializeNativeTargetAsmPrinter();
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> InitializeNativeTargetAsmParser();
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Then set the data layout in the module:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> TheModule-&amp;gt;setDataLayout(TheJIT-&amp;gt;getTargetMachine().createDataLayout());
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Then we can use the JIT compiler to compile the module:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">auto&lt;/span> H = TheJIT-&amp;gt;addModule(std::move(TheModule));
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Then generate the &lt;code>TreadSafeModule&lt;/code> and add to the JIT.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">auto&lt;/span> TSM = llvm::orc::ThreadSafeModule(std::move(TheModule), std::move(Context));
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Then set the data layout in the module:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> TheModule-&amp;gt;setDataLayout(TheJIT-&amp;gt;getTargetMachine().createDataLayout());
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Then we can use the JIT compiler to compile the module:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">auto&lt;/span> H = TheJIT-&amp;gt;addModule(std::move(TheModule));
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Then generate the &lt;code>TreadSafeModule&lt;/code> and add to the JIT.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">auto&lt;/span> TSM = llvm::orc::ThreadSafeModule(std::move(TheModule), std::move(Context));
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">auto&lt;/span> H = TheJIT-&amp;gt;addModule(std::move(TSM));
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Lastly, get the function pointer of the top-level function and call it:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">auto&lt;/span> ExprSymbol = TheJIT-&amp;gt;lookup(&lt;span style="color:#cd5555">&amp;#34;__anon_expr&amp;#34;&lt;/span>);
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Lastly, get the function pointer of the top-level function and call it:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-cpp" data-lang="cpp">&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">auto&lt;/span> ExprSymbol = TheJIT-&amp;gt;lookup(&lt;span style="color:#cd5555">&amp;#34;__anon_expr&amp;#34;&lt;/span>);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> assert(ExprSymbol &amp;amp;&amp;amp; &lt;span style="color:#cd5555">&amp;#34;Function not found&amp;#34;&lt;/span>);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#00688b;font-weight:bold">double&lt;/span> (*FP)() = (&lt;span style="color:#00688b;font-weight:bold">double&lt;/span> (*)())(intptr_t)cantFail(ExprSymbol.getAddress());
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fprintf(stderr, &lt;span style="color:#cd5555">&amp;#34;Evaluated to %f&lt;/span>&lt;span style="color:#cd5555">\n&lt;/span>&lt;span style="color:#cd5555">&amp;#34;&lt;/span>, FP());
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>- https://aspcompiler.github.io/posts/llvm-for-the-impatient-2/ - 2023 Li Chen</description></item><item><title>LLVM for the impatient (1)</title><link>https://aspcompiler.github.io/posts/llvm-for-the-impatient-1/</link><pubDate>Sat, 04 Feb 2023 14:42:43 -0800</pubDate><guid>https://aspcompiler.github.io/posts/llvm-for-the-impatient-1/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/llvm-for-the-impatient-1/ -&lt;h1 id="intro">Intro&lt;/h1>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>- https://aspcompiler.github.io/posts/llvm-for-the-impatient-2/ - 2023 Li Chen</description></item><item><title>LLVM for the impatient (1)</title><link>https://aspcompiler.github.io/posts/llvm-for-the-impatient-1/</link><pubDate>Sat, 04 Feb 2023 14:42:43 -0800</pubDate><guid>https://aspcompiler.github.io/posts/llvm-for-the-impatient-1/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/llvm-for-the-impatient-1/ -&lt;h1 id="intro">Intro&lt;/h1>
 &lt;p>LLVM is a common compiler backend. If you are writing a new language, you just need to target the LLVM backend. Then you will be able to use all the great optimization passes and target all the platforms that LLVM supports.&lt;/p>
-&lt;p>A common way to get started with LLVM is by following the &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html">tutorial&lt;/a>. The tutorial instructs us to build LLVM from the source. However, it is much faster to download the prebuilt binaries. The caveat is that you do have to use the tutorial source code that matches the binary you downloaded as the LLVM API do shift.&lt;/p>
+&lt;p>A best way to get started with LLVM is by following the &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html">tutorial&lt;/a>. The intended audience for this
+series is:&lt;/p>
+&lt;ol>
+&lt;li>Those who are learning from the tutorial but sometimes lost in the details. Many learners of LLVM are already familiar with basic concepts like parser, optimizers
+and code generation. So I tried to bring out the most important points just about LLVM and thus focus in learning through the tutorial.&lt;/li>
+&lt;li>Those who work with LLVM occasionally and need a quick refresher (like me). Or sometimes when I need to a template to put together a POC.&lt;/li>
+&lt;/ol>
+&lt;p>I highly value the experimental approach to learn anything. So some important tips are:&lt;/p>
+&lt;ol>
+&lt;li>The tutorial instructs us to build LLVM from the source. However, it takes hours to build LLVM so a much faster way is just to download the prebuilt binaries.&lt;/li>
+&lt;li>The LLVM API does change and the tutorials are often quickly updated from the &lt;code>main&lt;/code>. To work with the source code, get the version compatible with the binary
+from the source code &lt;a href="https://github.com/llvm/llvm-project/tree/main/llvm/examples/Kaleidoscope">branch&lt;/a>.&lt;/li>
+&lt;li>Many compilers can emit LLVM IR. For example, &lt;a href="https://clang.llvm.org/">Clang&lt;/a> can emit LLVM IR with the &lt;code>-emit-llvm&lt;/code> flag. Rust can emit LLVM IR with &lt;code>--emit=llvm-ir&lt;/code>. This is a great way to learn LLVM IR.&lt;/li>
+&lt;li>LLVM has some great tools such as &lt;code>llvm-as&lt;/code>, &lt;code>opt&lt;/code> and &lt;code>llvm-dis&lt;/code> can be used to experiment with optimizer and visualize LLVM.&lt;/li>
+&lt;/ol>
 &lt;h1 id="getting-the-llvm-binaries">Getting the LLVM binaries&lt;/h1>
 &lt;p>The &lt;a href="https://releases.llvm.org/download.html">LLVM download page&lt;/a> provides prebuilt binaries for a variety of operating systems and CPU architectures. On Linux or MacOS, we can download &lt;code>clang+llvm*&lt;/code> for our platform. For Windows, download &lt;code>llvm*-win64.exe&lt;/code>. If the download is a compressed archive, just expand into any directory.&lt;/p>
 &lt;p>On some platforms, it is possible package manager. For example, on macOS, we can install it with &lt;a href="https://formulae.brew.sh/formula/llvm">Homebrew&lt;/a>.&lt;/p>
 &lt;p>The installers/package managers usually do not add Clang/LLVM to PATH and that is fine. It is likely we will need to work with multiple versions of LLVM. Some OS, such as macOS, has a system Clang, so we do not want to override it. I strongly recommend that we add Clang/LLVM in terminal sessions when we need them.&lt;/p>
 &lt;h1 id="add-clangllvm-to-path">Add Clang/LLVM to path&lt;/h1>
 &lt;p>To add LLVM to path, just run:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">PATH&lt;/span>=PATH_TO_LLVM/bin:&lt;span style="color:#00688b">$PATH&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>If we install LLVM on macOS with Brew, we can run&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">PATH&lt;/span>=&lt;span style="color:#cd5555">&amp;#34;&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">$(&lt;/span>brew --prefix llvm&lt;span style="color:#8b008b;font-weight:bold">)&lt;/span>&lt;span style="color:#cd5555">/bin:&lt;/span>&lt;span style="color:#00688b">$PATH&lt;/span>&lt;span style="color:#cd5555">&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h1 id="other-environment-variables">Other environment variables&lt;/h1>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">PATH&lt;/span>=PATH_TO_LLVM/bin:&lt;span style="color:#00688b">$PATH&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>If we install LLVM on macOS with Brew, we can run&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">PATH&lt;/span>=&lt;span style="color:#cd5555">&amp;#34;&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">$(&lt;/span>brew --prefix llvm&lt;span style="color:#8b008b;font-weight:bold">)&lt;/span>&lt;span style="color:#cd5555">/bin:&lt;/span>&lt;span style="color:#00688b">$PATH&lt;/span>&lt;span style="color:#cd5555">&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h1 id="other-environment-variables">Other environment variables&lt;/h1>
 &lt;p>To build C++ with LLVM libraries, we can configure the LDFLAGS environment variable to point to the libraries. This can be done with:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">LDFLAGS&lt;/span>=&lt;span style="color:#cd5555">&amp;#34;-LPATH_TO_LLVM/lib&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Or with Brew installed LLVM:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">LDFLAGS&lt;/span>=&lt;span style="color:#cd5555">&amp;#34;-L&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">$(&lt;/span>brew --prefix llvm&lt;span style="color:#8b008b;font-weight:bold">)&lt;/span>&lt;span style="color:#cd5555">/lib&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Alternatively, we can also use the &lt;code>llvm-config&lt;/code> utility that comes with LLVM:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>clang++ &lt;span style="color:#cd5555">`&lt;/span>llvm-config --cxxflags&lt;span style="color:#cd5555">`&lt;/span> my_source.cpp
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h1 id="building-llvm-tutorial-code">Building LLVM tutorial code&lt;/h1>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">LDFLAGS&lt;/span>=&lt;span style="color:#cd5555">&amp;#34;-LPATH_TO_LLVM/lib&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Or with Brew installed LLVM:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">export&lt;/span> &lt;span style="color:#00688b">LDFLAGS&lt;/span>=&lt;span style="color:#cd5555">&amp;#34;-L&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">$(&lt;/span>brew --prefix llvm&lt;span style="color:#8b008b;font-weight:bold">)&lt;/span>&lt;span style="color:#cd5555">/lib&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Alternatively, we can also use the &lt;code>llvm-config&lt;/code> utility that comes with LLVM:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>clang++ &lt;span style="color:#cd5555">`&lt;/span>llvm-config --cxxflags&lt;span style="color:#cd5555">`&lt;/span> my_source.cpp
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h1 id="building-llvm-tutorial-code">Building LLVM tutorial code&lt;/h1>
 &lt;p>Once setting up, we can now build our first LLVM source code. Let us save the &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl02.html#full-code-listing">tutorial code&lt;/a> into a file, said, &lt;code>toy.cpp&lt;/code>. Assuming Clang is already in the path, we can run:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22"># Compile&lt;/span>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22"># Compile&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>clang++ -g -O3 toy.cpp &lt;span style="color:#cd5555">`&lt;/span>llvm-config --cxxflags&lt;span style="color:#cd5555">`&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22"># Run&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>./a.out
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Here -g means to generate debug symbol and -O3 is &lt;a href="https://clang.llvm.org/docs/CommandGuide/clang.html">optimization level 3&lt;/a>.
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Here -g means to generate debug symbol and -O3 is &lt;a href="https://clang.llvm.org/docs/CommandGuide/clang.html">optimization level 3&lt;/a>.
 We can now run Kaleidoscope Read-Eval-Print Loop (REPL):&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>$ ./a.out
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>$ ./a.out
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ready&amp;gt; def foo(x y) x+foo(y, 4.0);
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>Parsed a &lt;span style="color:#8b008b;font-weight:bold">function&lt;/span> definition.
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ready&amp;gt; def foo(x y) x+y y;
@@ -241,7 +509,9 @@ We can now run Kaleidoscope Read-Eval-Print Loop (REPL):&lt;/p>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ready&amp;gt; Parsed an extern
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>ready&amp;gt; ^D
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>$
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The first 2 chapters of &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html">LLVM tutorial&lt;/a> are relatively straigh-forward. You should read through them if you are not already familiar with the material.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The first 2 chapters of &lt;a href="https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html">LLVM tutorial&lt;/a> are relatively straigh-forward. You should read through them if you are not already familiar with the material.&lt;/p>
 &lt;h1 id="summary">Summary&lt;/h1>
 &lt;p>In the first blog post of this series, we walk through how to compile and run the first LLVM tutorial.&lt;/p>
 - https://aspcompiler.github.io/posts/llvm-for-the-impatient-1/ - 2023 Li Chen</description></item><item><title>The Remaking of My Blog with Hugo</title><link>https://aspcompiler.github.io/posts/remaking-of-my-blog/</link><pubDate>Sat, 28 Jan 2023 22:16:35 -0800</pubDate><guid>https://aspcompiler.github.io/posts/remaking-of-my-blog/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/remaking-of-my-blog/ -&lt;h1 id="the-remaking">The remaking&lt;/h1>
@@ -256,26 +526,87 @@ We can now run Kaleidoscope Read-Eval-Print Loop (REPL):&lt;/p>
 &lt;p>Then one can just follow &lt;a href="https://gohugo.io/getting-started/quick-start/">quick start&lt;/a>. When I get to the step of adding &lt;code>ananke&lt;/code> theme, I jumped to the &lt;a href="https://github.com/AmazingRise/hugo-theme-diary#quick-start">Dairy theme instructions&lt;/a> instead. Expand the section under &lt;code>Quick Start&lt;/code> to find the instructions.&lt;/p>
 &lt;h1 id="adding-contents">Adding Contents&lt;/h1>
 &lt;p>To add a new post, type:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>hugo new posts/my-first-post.md
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>You can also type:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>hugo new posts/my-first-post/index.md
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>The main difference is that the latter will create a directory for my-first-post. If the post contains images, you can add it to the same directory.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>hugo new posts/my-first-post.md
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>You can also type:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>hugo new posts/my-first-post/index.md
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The main difference is that the latter will create a directory for my-first-post. If the post contains images, you can add it to the same directory.&lt;/p>
 &lt;p>I also added an about page:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>hugo new about/index.md
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>To prevent the about page showing up like a blog, just locate the front matter which is a section at the beginning of the page and remove the &lt;code>date&lt;/code> entry:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-md" data-lang="md">&lt;span style="display:flex;">&lt;span>---
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>hugo new about/index.md
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>To prevent the about page showing up like a blog, just locate the front matter which is a section at the beginning of the page and remove the &lt;code>date&lt;/code> entry:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-md" data-lang="md">&lt;span style="display:flex;">&lt;span>---
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>title: &amp;#34;About Me&amp;#34;
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>draft: false
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>---
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>To build the static web site locally, run:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>hugo server
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>To include the draft pages, run:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>hugo server -D
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h1 id="configuration">Configuration&lt;/h1>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>To build the static web site locally, run:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>hugo server
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>To include the draft pages, run:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>hugo server -D
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h1 id="configuration">Configuration&lt;/h1>
 &lt;p>Most of the configurations are in the &lt;code>config.toml&lt;/code> file. One first needs to follow the instructions to set &lt;code>baseUrl&lt;/code>, &lt;code>title&lt;/code>, &lt;code>theme&lt;/code>, etc.&lt;/p>
 &lt;h2 id="configuring-main-menu">Configuring Main Menu&lt;/h2>
 &lt;p>Configuring the main menu is pretty straightforward. Just add several &lt;code>[[menu.main]]&lt;/code> elements. The double square-bracket means array in toml.&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-toml" data-lang="toml">&lt;span style="display:flex;">&lt;span>[[menu.main]]
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-toml" data-lang="toml">&lt;span style="display:flex;">&lt;span>[[menu.main]]
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>url = &lt;span style="color:#cd5555">&amp;#34;/about&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>name = &lt;span style="color:#cd5555">&amp;#34;About&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>weight = &lt;span style="color:#b452cd">1&lt;/span>
@@ -287,13 +618,24 @@ We can now run Kaleidoscope Read-Eval-Print Loop (REPL):&lt;/p>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>url = &lt;span style="color:#cd5555">&amp;#34;/index.xml&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>name = &lt;span style="color:#cd5555">&amp;#34;RSS Feed&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>weight = &lt;span style="color:#b452cd">3&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>Hugo recognizes some of the urls like &lt;code>posts&lt;/code> and &lt;code>index.xml&lt;/code> out of the box while we have to add contents for &lt;code>about&lt;/code>.&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Hugo recognizes some of the urls like &lt;code>posts&lt;/code> and &lt;code>index.xml&lt;/code> out of the box while we have to add contents for &lt;code>about&lt;/code>.&lt;/p>
 &lt;h2 id="comments">Comments&lt;/h2>
 &lt;p>Hugo supports several comment systems from free to paid. One of the easiest free ones is &lt;a href="https://utteranc.es/">utterance&lt;/a> which uses github issues to store comments. The configuration for utterance is:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-toml" data-lang="toml">&lt;span style="display:flex;">&lt;span>[params.utterances]
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-toml" data-lang="toml">&lt;span style="display:flex;">&lt;span>[params.utterances]
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>repo=&lt;span style="color:#cd5555">&amp;#34;aspcompiler/aspcompiler.github.io&amp;#34;&lt;/span>
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>theme=&lt;span style="color:#cd5555">&amp;#34;github-light&amp;#34;&lt;/span>
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;h2 id="search">Search&lt;/h2>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="search">Search&lt;/h2>
 &lt;p>One of the easiest ways to get search functionality is to configure &lt;a href="https://github.com/AmazingRise/hugo-theme-diary/wiki/Customization#add-google-search-box-on-your-site">google search&lt;/a>.&lt;/p>
 &lt;h2 id="syntax-highlighter">Syntax Highlighter&lt;/h2>
 &lt;p>Dairy theme has a default &lt;a href="https://github.com/AmazingRise/hugo-theme-diary/wiki/Customization#about-highlight">code highlighter&lt;/a> and we will see how it goes.&lt;/p>
@@ -301,9 +643,25 @@ We can now run Kaleidoscope Read-Eval-Print Loop (REPL):&lt;/p>
 &lt;p>To deploy to &lt;code>site.github.io&lt;/code>, one has to configure github action to build the site. This is basically adding and config the page &lt;code>.github/workflows/gh-pages.yml&lt;/code>. Follow the &lt;a href="https://gohugo.io/hosting-and-deployment/hosting-on-github/">instructions&lt;/a> from Hugo. In &lt;code>gh-pages.yml&lt;/code>, uncomment the line that says &lt;code>extended: true&lt;/code>. After the github action runs successfully, go to github Settings -&amp;gt; Pages, under the &lt;code>Build and deployment&lt;/code> section, change the branch to &lt;code>gh-pages&lt;/code>. Then the pages should deploy to https://&amp;lt;USERNAME|ORGANIZATION&amp;gt;.github.io/.&lt;/p>
 &lt;h2 id="trying-this-site">Trying this site&lt;/h2>
 &lt;p>To try this site locally, follow the instructions above to install &lt;code>Hugo&lt;/code> and its prerequisites. Then clone the projects:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>git clone --recurse-submodules https://github.com/aspcompiler/aspcompiler.github.io.git
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>git clone --recurse-submodules https://github.com/aspcompiler/aspcompiler.github.io.git
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">cd&lt;/span> aspcompiler.github.io
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>hugo server
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>If the site is cloned with the &lt;code>--recurse-submodules&lt;/code> argument, run the following after the fact:&lt;/p>
-&lt;div class="highlight">&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>git submodule update --init --recursive
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>- https://aspcompiler.github.io/posts/remaking-of-my-blog/ - 2023 Li Chen</description></item></channel></rss>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>If the site is cloned with the &lt;code>--recurse-submodules&lt;/code> argument, run the following after the fact:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>git submodule update --init --recursive
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>- https://aspcompiler.github.io/posts/remaking-of-my-blog/ - 2023 Li Chen</description></item></channel></rss>
