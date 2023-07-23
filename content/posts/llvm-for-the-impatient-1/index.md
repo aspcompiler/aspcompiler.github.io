@@ -10,7 +10,18 @@ draft: false
 
 LLVM is a common compiler backend. If you are writing a new language, you just need to target the LLVM backend. Then you will be able to use all the great optimization passes and target all the platforms that LLVM supports.
 
-A common way to get started with LLVM is by following the [tutorial](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html). The tutorial instructs us to build LLVM from the source. However, it is much faster to download the prebuilt binaries. The caveat is that you do have to use the tutorial source code that matches the binary you downloaded as the LLVM API do shift.
+A best way to get started with LLVM is by following the [tutorial](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html). The intended audience for this
+series is:
+1. Those who are learning from the tutorial but sometimes lost in the details. Many learners of LLVM are already familiar with basic concepts like parser, optimizers
+and code generation. So I tried to bring out the most important points just about LLVM and thus focus in learning through the tutorial.
+1. Those who work with LLVM occasionally and need a quick refresher (like me). Or sometimes when I need to a template to put together a POC.
+
+I highly value the experimental approach to learn anything. So some important tips are:
+1. The tutorial instructs us to build LLVM from the source. However, it takes hours to build LLVM so a much faster way is just to download the prebuilt binaries.
+1. The LLVM API does change and the tutorials are often quickly updated from the `main`. To work with the source code, get the version compatible with the binary
+from the source code [branch](https://github.com/llvm/llvm-project/tree/main/llvm/examples/Kaleidoscope).
+1. Many compilers can emit LLVM IR. For example, [Clang](https://clang.llvm.org/) can emit LLVM IR with the `-emit-llvm` flag. Rust can emit LLVM IR with `--emit=llvm-ir`. This is a great way to learn LLVM IR.
+1. LLVM has some great tools such as `llvm-as`, `opt` and `llvm-dis` can be used to experiment with optimizer and visualize LLVM.
 
 # Getting the LLVM binaries
 
