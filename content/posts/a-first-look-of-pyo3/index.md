@@ -165,5 +165,3 @@ PyO3 is a very powerful library for building Python bindings. We can build very 
 in Rust.
 
 Finally, we will implement a Python module in Rust.
-
-```rust
