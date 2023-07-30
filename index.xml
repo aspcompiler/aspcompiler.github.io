@@ -1,4 +1,253 @@
-<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Fri, 14 Jul 2023 15:43:15 -0700</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>The speed of gRPC Python is very impressive and that deserves a dive</title><link>https://aspcompiler.github.io/posts/grpc-python-is-fast/</link><pubDate>Fri, 14 Jul 2023 15:43:15 -0700</pubDate><guid>https://aspcompiler.github.io/posts/grpc-python-is-fast/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/grpc-python-is-fast/ -&lt;h1 id="intro">Intro&lt;/h1>
+<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Sat, 29 Jul 2023 22:33:22 -0700</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>A First Look of PyO3</title><link>https://aspcompiler.github.io/posts/a-first-look-of-pyo3/</link><pubDate>Sat, 29 Jul 2023 22:33:22 -0700</pubDate><guid>https://aspcompiler.github.io/posts/a-first-look-of-pyo3/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/a-first-look-of-pyo3/ -&lt;h1 id="introduction">Introduction&lt;/h1>
+&lt;p>&lt;a href="https://pyo3.rs/main/">PyO3&lt;/a> is a Rust library for building Python bindings. In this post, we will
+try to build a simple Python module with a few features using PyO3. For exhaustive documentation,
+please refer to the &lt;a href="https://pyo3.rs/main/">PyO3 user guide&lt;/a>.&lt;/p>
+&lt;h1 id="setup">Setup&lt;/h1>
+&lt;p>To learn how to setup PyO3, please follow the &lt;a href="https://pyo3.rs/main/">PyO3 user guide&lt;/a>. I have
+save my code in &lt;a href="https://github.com/aspcompiler/pyo3-test">this repository&lt;/a>. Please follow the
+README there to run my code.&lt;/p>
+&lt;h1 id="a-simple-python-module">A Simple Python Module&lt;/h1>
+&lt;p>Let us implement a single Python function in Rust.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">use&lt;/span>&lt;span style="color:#bbb"> &lt;/span>pyo3::prelude::*;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#1e889b">#[pyfunction]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">sum_as_string&lt;/span>(a: &lt;span style="color:#00688b;font-weight:bold">usize&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>b: &lt;span style="color:#00688b;font-weight:bold">usize&lt;/span>)&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#008b45;font-weight:bold">PyResult&lt;/span>&amp;lt;&lt;span style="color:#658b00">String&lt;/span>&amp;gt;&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#658b00">Ok&lt;/span>((a&lt;span style="color:#bbb"> &lt;/span>+&lt;span style="color:#bbb"> &lt;/span>b).to_string())&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We can call the function with the following Python code.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">import&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">pyo3_test&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">print&lt;/span>(pyo3_test.sum_as_string(&lt;span style="color:#b452cd">3&lt;/span>, &lt;span style="color:#b452cd">5&lt;/span>))
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The output is &lt;code>8&lt;/code>.&lt;/p>
+&lt;h1 id="a-python-class">A Python Class&lt;/h1>
+&lt;p>Next, we will implement a Python function that returns a Python class in Rust.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#1e889b">#[pyclass]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">struct&lt;/span> &lt;span style="color:#008b45;font-weight:bold">MyClass&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#1e889b">#[pyo3(get, set)]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>num: &lt;span style="color:#00688b;font-weight:bold">i32&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#1e889b">#[pyfunction]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">return_myclass&lt;/span>()&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#008b45;font-weight:bold">Py&lt;/span>&amp;lt;MyClass&amp;gt;&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>Python::with_gil(|py|&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#008b45;font-weight:bold">Py&lt;/span>&amp;lt;MyClass&amp;gt;&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>Py::new(py,&lt;span style="color:#bbb"> &lt;/span>MyClass&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb"> &lt;/span>num: &lt;span style="color:#b452cd">1&lt;/span>&lt;span style="color:#bbb"> &lt;/span>}).unwrap()&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>})&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Note that we use Py::new() to allocate the class in Python GIL memory.&lt;/p>
+&lt;p>We can use the class in Python.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#658b00">print&lt;/span>(pyo3_test.return_myclass().num)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The output is &lt;code>1&lt;/code>.&lt;/p>
+&lt;h1 id="a-python-iterator">A Python Iterator&lt;/h1>
+&lt;p>Next, we will implement something very Pythonic: an iterator.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#1e889b">#[pyclass]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">struct&lt;/span> &lt;span style="color:#008b45;font-weight:bold">PyClassIter&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>count: &lt;span style="color:#00688b;font-weight:bold">usize&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#1e889b">#[pymethods]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">impl&lt;/span>&lt;span style="color:#bbb"> &lt;/span>PyClassIter&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#1e889b">#[new]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">pub&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">new&lt;/span>()&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#008b45;font-weight:bold">Self&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>PyClassIter&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb"> &lt;/span>count: &lt;span style="color:#b452cd">0&lt;/span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">__iter__&lt;/span>(slf: &lt;span style="color:#008b45;font-weight:bold">PyRef&lt;/span>&amp;lt;&amp;#39;&lt;span style="color:#658b00">_&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>Self&amp;gt;)&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#008b45;font-weight:bold">PyRef&lt;/span>&amp;lt;&amp;#39;&lt;span style="color:#658b00">_&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>Self&amp;gt;&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>slf&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">__next__&lt;/span>(&amp;amp;&lt;span style="color:#8b008b;font-weight:bold">mut&lt;/span>&lt;span style="color:#bbb"> &lt;/span>self)&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#658b00">Option&lt;/span>&amp;lt;&lt;span style="color:#00688b;font-weight:bold">usize&lt;/span>&amp;gt;&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">if&lt;/span>&lt;span style="color:#bbb"> &lt;/span>self.count&lt;span style="color:#bbb"> &lt;/span>&amp;lt;&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">5&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>self.count&lt;span style="color:#bbb"> &lt;/span>+=&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">1&lt;/span>;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#228b22">// Given an instance `counter`, First five `next(counter)` calls yield 1, 2, 3, 4, 5.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#658b00">Some&lt;/span>(self.count)&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">else&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#658b00">None&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We can use the iterator in Python.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> i &lt;span style="color:#8b008b">in&lt;/span> pyo3_test.PyClassIter():
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#658b00">print&lt;/span>(i)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The output is &lt;code>1&lt;/code>, &lt;code>2&lt;/code>, &lt;code>3&lt;/code>, &lt;code>4&lt;/code>, &lt;code>5&lt;/code>.&lt;/p>
+&lt;h1 id="a-python-async-iterator">A Python Async Iterator&lt;/h1>
+&lt;p>Next, we want to have even more fun: an async iterator.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#1e889b">#[pyclass]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">struct&lt;/span> &lt;span style="color:#008b45;font-weight:bold">PyAsyncIter&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>count: &lt;span style="color:#008b45;font-weight:bold">Arc&lt;/span>&amp;lt;Mutex&amp;lt;&lt;span style="color:#00688b;font-weight:bold">usize&lt;/span>&amp;gt;&amp;gt;,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#1e889b">#[pymethods]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">impl&lt;/span>&lt;span style="color:#bbb"> &lt;/span>PyAsyncIter&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#1e889b">#[new]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">pub&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">new&lt;/span>()&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#008b45;font-weight:bold">Self&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>PyAsyncIter&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb"> &lt;/span>count: &lt;span style="color:#008b45;font-weight:bold">Arc&lt;/span>::new(Mutex::new(&lt;span style="color:#b452cd">0&lt;/span>))&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">__aiter__&lt;/span>(slf: &lt;span style="color:#008b45;font-weight:bold">PyRef&lt;/span>&amp;lt;&amp;#39;&lt;span style="color:#658b00">_&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>Self&amp;gt;)&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#008b45;font-weight:bold">PyRef&lt;/span>&amp;lt;&amp;#39;&lt;span style="color:#658b00">_&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>Self&amp;gt;&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>slf&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">__anext__&lt;/span>(slf: &lt;span style="color:#008b45;font-weight:bold">PyRefMut&lt;/span>&amp;lt;&amp;#39;&lt;span style="color:#658b00">_&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>Self&amp;gt;)&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#008b45;font-weight:bold">PyResult&lt;/span>&amp;lt;&lt;span style="color:#658b00">Option&lt;/span>&amp;lt;PyObject&amp;gt;&amp;gt;&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>count&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>slf.count.clone();&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>fut&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>pyo3_asyncio::tokio::future_into_py(slf.py(),&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">async&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">move&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">mut&lt;/span>&lt;span style="color:#bbb"> &lt;/span>count&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>count.lock().unwrap();&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">if&lt;/span>&lt;span style="color:#bbb"> &lt;/span>*count&lt;span style="color:#bbb"> &lt;/span>&amp;lt;&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">5&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>*count&lt;span style="color:#bbb"> &lt;/span>+=&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">1&lt;/span>;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#658b00">Ok&lt;/span>(Python::with_gil(|py|&lt;span style="color:#bbb"> &lt;/span>count.into_py(py)))&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">else&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#658b00">Err&lt;/span>(PyStopAsyncIteration::new_err(&lt;span style="color:#cd5555">&amp;#34;stream exhausted&amp;#34;&lt;/span>))&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>})?;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#658b00">Ok&lt;/span>(&lt;span style="color:#658b00">Some&lt;/span>(fut.into()))&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>There is a bit of boilerplate code. Hope &lt;a href="https://github.com/PyO3/pyo3/issues/3246">PyO3 0.20&lt;/a> will
+make it easier.&lt;/p>
+&lt;p>We can use the async iterator in Python.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">async&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> i &lt;span style="color:#8b008b">in&lt;/span> pyo3_test.PyAsyncIter():
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#658b00">print&lt;/span>(i)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The output is &lt;code>1&lt;/code>, &lt;code>2&lt;/code>, &lt;code>3&lt;/code>, &lt;code>4&lt;/code>, &lt;code>5&lt;/code>.&lt;/p>
+&lt;h1 id="summary">Summary&lt;/h1>
+&lt;p>PyO3 is a very powerful library for building Python bindings. We can build very Pythonic modules
+in Rust.&lt;/p>
+&lt;p>Finally, we will implement a Python module in Rust.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>- https://aspcompiler.github.io/posts/a-first-look-of-pyo3/ - 2023 Li Chen</description></item><item><title>The speed of gRPC Python is very impressive and that deserves a dive</title><link>https://aspcompiler.github.io/posts/grpc-python-is-fast/</link><pubDate>Fri, 14 Jul 2023 15:43:15 -0700</pubDate><guid>https://aspcompiler.github.io/posts/grpc-python-is-fast/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/grpc-python-is-fast/ -&lt;h1 id="intro">Intro&lt;/h1>
 &lt;p>Recently, I did a small experiment to compare the &lt;a href="https://github.com/aspcompiler/grpc-perf">performance&lt;/a> of gRPC Python and other languages. The result is very impressive. I would expect to see a interpreted code many times slower than a native code. Intuitively, this can only happen if the code is mostly native. Let us dive in to see how it was implemented.&lt;/p>
 &lt;h1 id="grpc-python-implementation">gRPC Python implementation&lt;/h1>
 &lt;p>gRPC has 2 major parts. Its serializer is built upon &lt;a href="https://github.com/protocolbuffers/protobuf">protobuf&lt;/a>. The RPC part is built upon HTTP/2.&lt;/p>
