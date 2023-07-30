@@ -241,13 +241,7 @@ make it easier.&lt;/p>
 &lt;p>PyO3 is a very powerful library for building Python bindings. We can build very Pythonic modules
 in Rust.&lt;/p>
 &lt;p>Finally, we will implement a Python module in Rust.&lt;/p>
-&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
-&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
-&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;/code>&lt;/pre>&lt;/td>
-&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
-&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
-&lt;/div>
-&lt;/div>- https://aspcompiler.github.io/posts/a-first-look-of-pyo3/ - 2023 Li Chen</description></item><item><title>The speed of gRPC Python is very impressive and that deserves a dive</title><link>https://aspcompiler.github.io/posts/grpc-python-is-fast/</link><pubDate>Fri, 14 Jul 2023 15:43:15 -0700</pubDate><guid>https://aspcompiler.github.io/posts/grpc-python-is-fast/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/grpc-python-is-fast/ -&lt;h1 id="intro">Intro&lt;/h1>
+- https://aspcompiler.github.io/posts/a-first-look-of-pyo3/ - 2023 Li Chen</description></item><item><title>The speed of gRPC Python is very impressive and that deserves a dive</title><link>https://aspcompiler.github.io/posts/grpc-python-is-fast/</link><pubDate>Fri, 14 Jul 2023 15:43:15 -0700</pubDate><guid>https://aspcompiler.github.io/posts/grpc-python-is-fast/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/grpc-python-is-fast/ -&lt;h1 id="intro">Intro&lt;/h1>
 &lt;p>Recently, I did a small experiment to compare the &lt;a href="https://github.com/aspcompiler/grpc-perf">performance&lt;/a> of gRPC Python and other languages. The result is very impressive. I would expect to see a interpreted code many times slower than a native code. Intuitively, this can only happen if the code is mostly native. Let us dive in to see how it was implemented.&lt;/p>
 &lt;h1 id="grpc-python-implementation">gRPC Python implementation&lt;/h1>
 &lt;p>gRPC has 2 major parts. Its serializer is built upon &lt;a href="https://github.com/protocolbuffers/protobuf">protobuf&lt;/a>. The RPC part is built upon HTTP/2.&lt;/p>
