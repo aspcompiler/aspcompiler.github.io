@@ -2,6 +2,7 @@
 title: "A First Look of PyO3"
 date: 2023-07-29T22:33:22-07:00
 draft: false
+tags: ["pyo3", "python", "rust"]
 ---
 
 # Introduction

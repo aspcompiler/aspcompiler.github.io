@@ -2,6 +2,7 @@
 title: "The speed of gRPC Python is very impressive and that deserves a dive"
 date: 2023-07-14T15:43:15-07:00
 draft: false
+tags: ["grpc", "python"]
 ---
 
 # Intro
