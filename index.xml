@@ -1,4 +1,158 @@
-<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Sat, 29 Jul 2023 22:33:22 -0700</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>A First Look of PyO3</title><link>https://aspcompiler.github.io/posts/a-first-look-of-pyo3/</link><pubDate>Sat, 29 Jul 2023 22:33:22 -0700</pubDate><guid>https://aspcompiler.github.io/posts/a-first-look-of-pyo3/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/a-first-look-of-pyo3/ -&lt;h1 id="introduction">Introduction&lt;/h1>
+<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Sat, 19 Aug 2023 10:32:41 -0700</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Practical Rust Ownership</title><link>https://aspcompiler.github.io/posts/practical-rust-ownership/</link><pubDate>Sat, 19 Aug 2023 10:32:41 -0700</pubDate><guid>https://aspcompiler.github.io/posts/practical-rust-ownership/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/practical-rust-ownership/ -&lt;h1 id="introduction">Introduction&lt;/h1>
+&lt;p>Rust &lt;code>ownership&lt;/code> is often listed as &lt;a href="https://opensource.googleblog.com/2023/06/rust-fact-vs-fiction-5-insights-from-googles-rust-journey-2022.html">one of the top challenging areas&lt;/a> of Rust. Contributing to this challenge is that the practical perspective
+of the Rust ownership is spread across many chapters the &lt;a href="https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html">Rust book&lt;/a>. In this post,
+I will attempt to work through Rust ownership in a practical perspective.&lt;/p>
+&lt;p>I do not intend this post to be an introduction material that cover every details. Instead, I intend this to be a guide that points to various Rust book chapters.&lt;/p>
+&lt;h1 id="stack-and-heap">Stack and Heap&lt;/h1>
+&lt;p>Like many other languages, Rust can allocate memory on a stack or a heap. Like C/C++, and unlike languages with garbage collection like Java or C#,
+Rust developers often prefer to allocate memory on a stack. The reason is that stack allocation is faster and deallocation does not cause memory fragmentation.
+The first think to keep in mind is that variable allocated on a stack cannot outlive the function that allocated it.&lt;/p>
+&lt;p>Question: When we create a variable, how do we know if it is allocated on a stack or a heap?&lt;/p>
+&lt;p>Answer: It depends on types. Scalar Types are allocated on a stack. Fix-sized Compound Types such as arrays, tuples and structs
+are also allocated on a stack if they only have fix-sized members. Growable types such as &lt;code>String&lt;/code> and &lt;code>Vec&lt;/code> are allocated on a heap.
+To explicitly allocate on a heap a type that otherwise would be allocated on a stack, we can use &lt;a href="https://doc.rust-lang.org/book/ch15-01-box.html?highlight=box#enabling-recursive-types-with-boxes">&lt;code>Box&lt;/code> type&lt;/a>.&lt;/p>
+&lt;p>See The Stack and the Heap section in the &lt;a href="https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html#the-stack-and-the-heap">Rust book&lt;/a>. Also see the &lt;a href="https://doc.rust-lang.org/book/ch03-02-data-types.html">Data Types&lt;/a> chapter.&lt;/p>
+&lt;h1 id="ownership">Ownership&lt;/h1>
+&lt;p>The Rust ownership rule is fairly straight forward:&lt;/p>
+&lt;ul>
+&lt;li>Each value in Rust has an owner.&lt;/li>
+&lt;li>There can only be one owner at a time.&lt;/li>
+&lt;li>When the owner goes out of scope, the value will be dropped.&lt;/li>
+&lt;/ul>
+&lt;p>Question: when we assign a variable to another variable or when we pass a variable to a function, does the ownership transfer?&lt;/p>
+&lt;p>Answer: it depends on the type. If the type implements the &lt;code>Copy&lt;/code> trait, the value will be copied. We sometimes call these types &lt;code>copy&lt;/code>. Otherwise, the ownership
+transfers and we call it &lt;code>move&lt;/code>.&lt;/p>
+&lt;p>See the &lt;a href="https://doc.rust-lang.org/book/ch04-01-what-is-ownership">Ownership&lt;/a> chapter for more details.&lt;/p>
+&lt;h1 id="references">References&lt;/h1>
+&lt;p>It would be very inconvenient if we always have to copy or move variables when we pass them to a function. Rust has another mechanism called &lt;code>reference&lt;/code> or &lt;code>borrowing&lt;/code>. Reference is like a pointer. Rust has the following rules for references:&lt;/p>
+&lt;ul>
+&lt;li>At any given time, you can have either one mutable reference or any number of immutable references.&lt;/li>
+&lt;li>References must always be valid.&lt;/li>
+&lt;/ul>
+&lt;p>Question: Does the following code compile?&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">main&lt;/span>()&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>len&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#658b00">String&lt;/span>::from(&lt;span style="color:#cd5555">&amp;#34;hello&amp;#34;&lt;/span>).len();&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>println!(&lt;span style="color:#cd5555">&amp;#34;The length is {}.&amp;#34;&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>len);&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The answer is yes. During method chaining, Rust can create a temporary ownership without requiring us to explicitly create a owning variable.&lt;/p>
+&lt;p>See the &lt;a href="https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html">References and Borrowing&lt;/a> chapter for more details.&lt;/p>
+&lt;h1 id="the-slice-type">The Slice Type&lt;/h1>
+&lt;p>Slices let you reference a contiguous sequence of elements in a collection rather than the whole collection. We usually see slices in String or arrays.&lt;/p>
+&lt;p>Question: If we design a function, how do we decide whether to pass parameter by moving, or borrowing or slicing? How about return type?&lt;/p>
+&lt;p>Answer:&lt;/p>
+&lt;ol>
+&lt;li>For passing parameter, consider reference first unless moving ownership is the right thing to do (e.g., &lt;code>setValues&lt;/code>). Use ```mut T` if the function needs to mutate the parameter.&lt;/li>
+&lt;li>If the type supports slicing, consider using slice as the parameter type or return type first.&lt;/li>
+&lt;li>For return type, move ownership if the function creates a new value.&lt;/li>
+&lt;li>If the function receives parameters by reference and returns a reference, check the &lt;code>lifetime&lt;/code>.&lt;/li>
+&lt;/ol>
+&lt;p>See the &lt;a href="https://doc.rust-lang.org/book/ch04-03-slices.html">Slices&lt;/a> chapter for more details.&lt;/p>
+&lt;h1 id="lifetime">Lifetime&lt;/h1>
+&lt;p>In the previous section, we mentioned &lt;code>lifetime&lt;/code>. Lifetime is a mechanism to ensure that references are valid as long as we need them to be.&lt;/p>
+&lt;p>An example of lifetime is the following code:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">longest&lt;/span>&amp;lt;&amp;#39;&lt;span style="color:#658b00">a&lt;/span>&amp;gt;(x: &lt;span style="color:#8b008b;font-weight:bold">&amp;amp;&lt;/span>&amp;#39;&lt;span style="color:#658b00">a&lt;/span> &lt;span style="color:#00688b;font-weight:bold">str&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>y: &lt;span style="color:#8b008b;font-weight:bold">&amp;amp;&lt;/span>&amp;#39;&lt;span style="color:#658b00">a&lt;/span> &lt;span style="color:#00688b;font-weight:bold">str&lt;/span>)&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#8b008b;font-weight:bold">&amp;amp;&lt;/span>&amp;#39;&lt;span style="color:#658b00">a&lt;/span> &lt;span style="color:#00688b;font-weight:bold">str&lt;/span> {&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">if&lt;/span>&lt;span style="color:#bbb"> &lt;/span>x.len()&lt;span style="color:#bbb"> &lt;/span>&amp;gt;&lt;span style="color:#bbb"> &lt;/span>y.len()&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>x&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">else&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>y&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Since the compiler cannot determine whether x or y will be returned, we need to tell the compiler that &lt;code>x&lt;/code> and &lt;code>y&lt;/code> needs to be valid. Sometimes, a function
+compiles without lifetime annotations. This is called called &lt;a href="https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html#lifetime-elision">lifetime elision&lt;/a>.&lt;/p>
+&lt;h1 id="box-rc-and-refcell">Box, Rc and RefCell&lt;/h1>
+&lt;p>Earlier, we mentioned that &lt;code>Box&lt;/code> is a type that allocates on a heap. &lt;code>Box&lt;/code> is a single ownership start pointer. In contrast, &lt;code>Rc&lt;/code> is a &lt;a href="https://doc.rust-lang.org/book/ch15-04-rc.html">reference counted
+smart pointer&lt;/a>. &lt;code>RefCell&lt;/code> is a mechanism allows you to mutate data even when there are immutable references
+to that data. This is called &lt;a href="https://doc.rust-lang.org/book/ch15-05-interior-mutability.html">interior mutability&lt;/a>. The borrowing rules are enforced at runtime.&lt;/p>
+&lt;h1 id="ownership-and-threads">Ownership and Threads&lt;/h1>
+&lt;p>&lt;code>Rc&lt;/code> cannot be shared across threads. To share data across threads, we need to use &lt;code>Arc&lt;/code> which is an atomic reference count type. &lt;code>Arc&lt;/code> is often used together
+with &lt;code>Mutex&lt;/code> to synchronize access to data. For example:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>counter&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>Arc::new(Mutex::new(&lt;span style="color:#b452cd">0&lt;/span>));&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#228b22">// To use
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">mut&lt;/span>&lt;span style="color:#bbb"> &lt;/span>num&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>counter.lock().unwrap();&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>*num&lt;span style="color:#bbb"> &lt;/span>+=&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">1&lt;/span>;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>See the &lt;a href="https://doc.rust-lang.org/book/ch16-00-concurrency.html">Concurrency&lt;/a> chapter for more details.&lt;/p>
+&lt;p>Lastly, the type that can be transferred across threads is called &lt;code>Send&lt;/code>. The type that can be shared across threads is called &lt;code>Sync&lt;/code>. See the &lt;a href="https://doc.rust-lang.org/book/ch16-02-message-passing.html#sending-multiple-messages">Send and Sync&lt;/a> chapter for more details.&lt;/p>
+&lt;h1 id="final-thoughts">Final Thoughts&lt;/h1>
+&lt;p>To put the knowledge together, let&amp;rsquo;s ask the following question: should a &lt;code>struct&lt;/code> owns its members?&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">struct&lt;/span> &lt;span style="color:#008b45;font-weight:bold">User&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>id: &lt;span style="color:#00688b;font-weight:bold">u32&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>name: &lt;span style="color:#658b00">String&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>screen_name: &lt;span style="color:#658b00">String&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>location: &lt;span style="color:#658b00">String&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>or&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">struct&lt;/span> &lt;span style="color:#008b45;font-weight:bold">User&lt;/span>&amp;lt;&amp;#39;&lt;span style="color:#658b00">a&lt;/span>&amp;gt;&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>id: &lt;span style="color:#00688b;font-weight:bold">u32&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>name: &lt;span style="color:#8b008b;font-weight:bold">&amp;amp;&lt;/span>&amp;#39;&lt;span style="color:#658b00">a&lt;/span> &lt;span style="color:#00688b;font-weight:bold">str&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>screen_name: &lt;span style="color:#8b008b;font-weight:bold">&amp;amp;&lt;/span>&amp;#39;&lt;span style="color:#658b00">a&lt;/span> &lt;span style="color:#00688b;font-weight:bold">str&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>location: &lt;span style="color:#8b008b;font-weight:bold">&amp;amp;&lt;/span>&amp;#39;&lt;span style="color:#658b00">a&lt;/span> &lt;span style="color:#00688b;font-weight:bold">str&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Generally, we prefer to keep everything in the same place. However, the first struct is fairly rigid: we have to construct the struct at once and we cannot move ownership out of the struct. The stepwise construction is needed or if we need to move ownership out of the struct, we need to use &lt;code>Option&lt;/code>.&lt;/p>
+&lt;p>The second struct is useful when the data is already owned by a buffer. See zero-copy in &lt;a href="https://serde.rs/lifetimes.html">serde&lt;/a>.&lt;/p>
+&lt;h1 id="summary">Summary&lt;/h1>
+&lt;p>We took a lap around Rust ownership. We pointed to various chapters in the Rust book. We also discussed some practical considerations when designing a function or a struct.&lt;/p>
+- https://aspcompiler.github.io/posts/practical-rust-ownership/ - 2023 Li Chen</description></item><item><title>A First Look of PyO3</title><link>https://aspcompiler.github.io/posts/a-first-look-of-pyo3/</link><pubDate>Sat, 29 Jul 2023 22:33:22 -0700</pubDate><guid>https://aspcompiler.github.io/posts/a-first-look-of-pyo3/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/a-first-look-of-pyo3/ -&lt;h1 id="introduction">Introduction&lt;/h1>
 &lt;p>&lt;a href="https://pyo3.rs/main/">PyO3&lt;/a> is a Rust library for building Python bindings. In this post, we will
 try to build a simple Python module with a few features using PyO3. For exhaustive documentation,
 please refer to the &lt;a href="https://pyo3.rs/main/">PyO3 user guide&lt;/a>.&lt;/p>
