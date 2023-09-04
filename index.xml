@@ -1,4 +1,82 @@
-<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Sat, 19 Aug 2023 10:32:41 -0700</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Practical Rust Ownership</title><link>https://aspcompiler.github.io/posts/practical-rust-ownership/</link><pubDate>Sat, 19 Aug 2023 10:32:41 -0700</pubDate><guid>https://aspcompiler.github.io/posts/practical-rust-ownership/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/practical-rust-ownership/ -&lt;h1 id="introduction">Introduction&lt;/h1>
+<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Mon, 04 Sep 2023 08:09:34 -0700</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Is Rust a Good Language for Machine Learning</title><link>https://aspcompiler.github.io/posts/rust-machine-learning/</link><pubDate>Mon, 04 Sep 2023 08:09:34 -0700</pubDate><guid>https://aspcompiler.github.io/posts/rust-machine-learning/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/rust-machine-learning/ -&lt;h1 id="introduction">Introduction&lt;/h1>
+&lt;p>Rust has been known for its performance and memory/thread safety. However, it takes an ecosystem to be successful. So far, Rust has found
+a lot of success in network programming and bit coin mining. Rust has an excellent support for &lt;code>async&lt;/code> making it a great language any time
+we need distributed systems.&lt;/p>
+&lt;p>For the reason, Rust has found a lot of success in vector databases.&lt;/p>
+&lt;h1 id="vector-databases">Vector Databases&lt;/h1>
+&lt;p>There are several start-up companies that are building vector databases using Rust: &lt;a href="https://www.pinecone.io/blog/rust-rewrite/">Pinecone&lt;/a>,
+&lt;a href="https://github.com/qdrant/qdrant">Qdrant&lt;/a> and &lt;a href="https://fennel.ai/blog/vector-search-in-200-lines-of-rust/">Fennel.ai&lt;/a>.&lt;/p>
+&lt;h2 id="const-generics">Const generics&lt;/h2>
+&lt;p>Rust has an interesting feature called &lt;a href="https://doc.rust-lang.org/reference/items/generics.html">const generics&lt;/a> that is uniquely suitable for vector databases. Const generics are generic arguments that range over constant values, rather than types or lifetimes. This allows, for instance, types to be parameterized by integers. The follow are some examples of const generics:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">// Examples where const generic parameters can be used.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#228b22">// Used in the signature of the item itself.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">foo&lt;/span>&amp;lt;&lt;span style="color:#8b008b;font-weight:bold">const&lt;/span>&lt;span style="color:#bbb"> &lt;/span>N: &lt;span style="color:#00688b;font-weight:bold">usize&lt;/span>&amp;gt;(arr: [&lt;span style="color:#00688b;font-weight:bold">i32&lt;/span>;&lt;span style="color:#bbb"> &lt;/span>N])&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#228b22">// Used as a type within a function body.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>x: [&lt;span style="color:#00688b;font-weight:bold">i32&lt;/span>;&lt;span style="color:#bbb"> &lt;/span>N];&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#228b22">// Used as an expression.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>&lt;span style="color:#bbb"> &lt;/span>println!(&lt;span style="color:#cd5555">&amp;#34;{}&amp;#34;&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>N&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">2&lt;/span>);&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#228b22">// Used as a field of a struct.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">struct&lt;/span> &lt;span style="color:#008b45;font-weight:bold">Foo&lt;/span>&amp;lt;&lt;span style="color:#8b008b;font-weight:bold">const&lt;/span>&lt;span style="color:#bbb"> &lt;/span>N: &lt;span style="color:#00688b;font-weight:bold">usize&lt;/span>&amp;gt;([&lt;span style="color:#00688b;font-weight:bold">i32&lt;/span>;&lt;span style="color:#bbb"> &lt;/span>N]);&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">impl&lt;/span>&amp;lt;&lt;span style="color:#8b008b;font-weight:bold">const&lt;/span>&lt;span style="color:#bbb"> &lt;/span>N: &lt;span style="color:#00688b;font-weight:bold">usize&lt;/span>&amp;gt;&lt;span style="color:#bbb"> &lt;/span>Foo&amp;lt;N&amp;gt;&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#228b22">// Used as an associated constant.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">const&lt;/span>&lt;span style="color:#bbb"> &lt;/span>CONST: &lt;span style="color:#00688b;font-weight:bold">usize&lt;/span> =&lt;span style="color:#bbb"> &lt;/span>N&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">4&lt;/span>;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">trait&lt;/span>&lt;span style="color:#bbb"> &lt;/span>Trait&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">type&lt;/span> &lt;span style="color:#008b45;font-weight:bold">Output&lt;/span>;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">impl&lt;/span>&amp;lt;&lt;span style="color:#8b008b;font-weight:bold">const&lt;/span>&lt;span style="color:#bbb"> &lt;/span>N: &lt;span style="color:#00688b;font-weight:bold">usize&lt;/span>&amp;gt;&lt;span style="color:#bbb"> &lt;/span>Trait&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">for&lt;/span>&lt;span style="color:#bbb"> &lt;/span>Foo&amp;lt;N&amp;gt;&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#228b22">// Used as an associated type.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">type&lt;/span> &lt;span style="color:#008b45;font-weight:bold">Output&lt;/span>&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>[&lt;span style="color:#00688b;font-weight:bold">i32&lt;/span>;&lt;span style="color:#bbb"> &lt;/span>N];&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h1 id="frameworks">Frameworks&lt;/h1>
+&lt;p>Rust has been growing in machine learning frameworks as well, for example, Hugging Face &lt;a href="https://github.com/huggingface/candle">candle&lt;/a> and &lt;a href="https://github.com/burn-rs/burn">burn-rs&lt;/a>. Each of these frameworks can only run some models. For example, for &lt;code>candle&lt;/code>, &lt;a href="https://huggingface.co/spaces/lmz/candle-whisper">candle-whisper&lt;/a> and &lt;a href="https://huggingface.co/spaces/lmz/candle-llama2">candle-llama2&lt;/a> and for &lt;code>burn&lt;/code>, &lt;a href="https://github.com/Gadersd/whisper-burn">whisper-burn&lt;/a> and &lt;a href="https://github.com/Gadersd/llama2-burn">llama2-burn&lt;/a>.&lt;/p>
+&lt;p>These frameworks can work in spacial cases where frameworks like &lt;code>PyTorch&lt;/code> are too large. For example, Candle&amp;rsquo;s core goal is to make &lt;code>serverless inference&lt;/code> possible.&lt;/p>
+&lt;p>This frameworks gave proof that Rust is a viable language for machine learning. They also built-up an ecosystem of Rust libraries that could be very useful for other Rust projects, for example, &lt;a href="https://github.com/LaurentMazare/tch-rs">tch-rs&lt;/a>. Hugging Face also has &lt;a href="https://github.com/huggingface?q=&amp;amp;type=all&amp;amp;language=rust&amp;amp;sort=">several tools developed in Rust&lt;/a>.&lt;/p>
+&lt;h1 id="references">References&lt;/h1>
+&lt;p>I have only touched a small part of machine learning in Rust. For more comprehensive reviews, please check out the following references:&lt;/p>
+&lt;ul>
+&lt;li>&lt;a href="https://www.arewelearningyet.com/">Are we learning yet&lt;/a>&lt;/li>
+&lt;li>&lt;a href="Awesome-Rust-MachineLearning">Awesome-Rust-MachineLearning&lt;/a>&lt;/li>
+&lt;/ul>
+- https://aspcompiler.github.io/posts/rust-machine-learning/ - 2023 Li Chen</description></item><item><title>Practical Rust Ownership</title><link>https://aspcompiler.github.io/posts/practical-rust-ownership/</link><pubDate>Sat, 19 Aug 2023 10:32:41 -0700</pubDate><guid>https://aspcompiler.github.io/posts/practical-rust-ownership/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/practical-rust-ownership/ -&lt;h1 id="introduction">Introduction&lt;/h1>
 &lt;p>Rust &lt;code>ownership&lt;/code> is often listed as &lt;a href="https://opensource.googleblog.com/2023/06/rust-fact-vs-fiction-5-insights-from-googles-rust-journey-2022.html">one of the top challenging areas&lt;/a> of Rust. Contributing to this challenge is that the practical perspective
 of the Rust ownership is spread across many chapters the &lt;a href="https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html">Rust book&lt;/a>. In this post,
 I will attempt to work through Rust ownership in a practical perspective.&lt;/p>
