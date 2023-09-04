@@ -1,5 +1,5 @@
 ---
-title: "Is Rust a Good Language for Machine Learning"
+title: "Is Rust a Good Language for Machine Learning?"
 date: 2023-09-04T08:09:34-07:00
 draft: false
 ---
