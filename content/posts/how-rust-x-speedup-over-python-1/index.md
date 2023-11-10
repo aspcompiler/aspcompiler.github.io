@@ -1,7 +1,7 @@
 ---
 title: "How Rust gets an x speedup over Python - Part 1"
 date: 2023-11-10T08:34:57-08:00
-draft: true
+draft: false
 ---
 
 # Introduction
