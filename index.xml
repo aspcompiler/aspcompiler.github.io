@@ -1,4 +1,552 @@
-<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Mon, 04 Sep 2023 08:09:34 -0700</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Is Rust a Good Language for Machine Learning?</title><link>https://aspcompiler.github.io/posts/rust-machine-learning/</link><pubDate>Mon, 04 Sep 2023 08:09:34 -0700</pubDate><guid>https://aspcompiler.github.io/posts/rust-machine-learning/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/rust-machine-learning/ -&lt;h1 id="introduction">Introduction&lt;/h1>
+<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Fri, 10 Nov 2023 08:34:57 -0800</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>How Rust gets an x speedup over Python - Part 1</title><link>https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/</link><pubDate>Fri, 10 Nov 2023 08:34:57 -0800</pubDate><guid>https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/ -&lt;h1 id="introduction">Introduction&lt;/h1>
+&lt;p>Inspired by the Modular bog series, &lt;a href="https://www.modular.com/blog/how-mojo-gets-a-35-000x-speedup-over-python-part-1">part 1&lt;/a>,
+&lt;a href="https://www.modular.com/blog/how-mojo-gets-a-35-000x-speedup-over-python-part-2">part 2&lt;/a>, and
+&lt;a href="https://www.modular.com/blog/mojo-a-journey-to-68-000x-speedup-over-python-part-3">part 3&lt;/a>, I want to see what kind of speedup
+I can get with Rust.&lt;/p>
+&lt;h1 id="the-baseline">The baseline&lt;/h1>
+&lt;p>I will use the same Mandelbrot set example. For an explanation of the algorithm, see the part 1 of the Modular blog posts linked above.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">import&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">numpy&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">as&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">np&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">import&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">matplotlib.pyplot&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">as&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">plt&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">import&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">matplotlib.colors&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">as&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">colors&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> &lt;span style="color:#008b45">mandelbrot_kernel&lt;/span>(c, max_iters):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> z = c
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> nv = &lt;span style="color:#b452cd">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> i &lt;span style="color:#8b008b">in&lt;/span> &lt;span style="color:#658b00">range&lt;/span>(max_iters):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">if&lt;/span> &lt;span style="color:#658b00">abs&lt;/span>(z) &amp;gt; &lt;span style="color:#b452cd">2&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">break&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> z = z*z + c
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> nv += &lt;span style="color:#b452cd">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">return&lt;/span> nv
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> &lt;span style="color:#008b45">compute_mandelbrot&lt;/span>(min_x, max_x, min_y, max_y, width, height, iters):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22"># create a matrix. Each element of the matrix corresponds to a pixel&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> t = [[&lt;span style="color:#b452cd">0&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> _ &lt;span style="color:#8b008b">in&lt;/span> &lt;span style="color:#658b00">range&lt;/span>(width)] &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> _ &lt;span style="color:#8b008b">in&lt;/span> &lt;span style="color:#658b00">range&lt;/span>(height)]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dx = (max_x - min_x) / width
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dy = (max_y - min_y) / height
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> y = min_y
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> row &lt;span style="color:#8b008b">in&lt;/span> &lt;span style="color:#658b00">range&lt;/span>(height):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> x = min_x
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> col &lt;span style="color:#8b008b">in&lt;/span> &lt;span style="color:#658b00">range&lt;/span>(width):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> t[row][col] = mandelbrot_kernel(&lt;span style="color:#658b00">complex&lt;/span>(x, y), iters)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> x += dx
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> y += dy
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">return&lt;/span> np.array(t)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> &lt;span style="color:#008b45">show_plot&lt;/span>(numpy_array):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> scale = &lt;span style="color:#b452cd">10&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dpi = &lt;span style="color:#b452cd">64&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> height, width = numpy_array.shape
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> fig = plt.figure(&lt;span style="color:#b452cd">1&lt;/span>, [scale, scale * height // width], dpi)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ax = fig.add_axes([&lt;span style="color:#b452cd">0.0&lt;/span>, &lt;span style="color:#b452cd">0.0&lt;/span>, &lt;span style="color:#b452cd">1.0&lt;/span>, &lt;span style="color:#b452cd">1.0&lt;/span>], &lt;span style="color:#8b008b;font-weight:bold">False&lt;/span>, &lt;span style="color:#b452cd">1&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> light = colors.LightSource(&lt;span style="color:#b452cd">315&lt;/span>, &lt;span style="color:#b452cd">10&lt;/span>, &lt;span style="color:#b452cd">0&lt;/span>, &lt;span style="color:#b452cd">1&lt;/span>, &lt;span style="color:#b452cd">1&lt;/span>, &lt;span style="color:#b452cd">0&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> image = light.shade(numpy_array, plt.cm.hot, colors.PowerNorm(&lt;span style="color:#b452cd">0.3&lt;/span>), &lt;span style="color:#cd5555">&amp;#34;hsv&amp;#34;&lt;/span>, &lt;span style="color:#b452cd">0&lt;/span>, &lt;span style="color:#b452cd">0&lt;/span>, &lt;span style="color:#b452cd">1.5&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> plt.imshow(image)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> plt.axis(&lt;span style="color:#cd5555">&amp;#34;off&amp;#34;&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> plt.show()
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>width = &lt;span style="color:#b452cd">960&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>height = &lt;span style="color:#b452cd">960&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>min_x = -&lt;span style="color:#b452cd">2.0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>max_x = &lt;span style="color:#b452cd">0.6&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>min_y = -&lt;span style="color:#b452cd">1.5&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>max_y = &lt;span style="color:#b452cd">1.5&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>iters = &lt;span style="color:#b452cd">200&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>tensor = []
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>%timeit -n &lt;span style="color:#b452cd">1&lt;/span> -r &lt;span style="color:#b452cd">1&lt;/span> tensor.append(compute_mandelbrot(min_x, max_x, min_y, max_y, width, height, iters))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>tensor = tensor[&lt;span style="color:#b452cd">0&lt;/span>]
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>This outputs:&lt;/p>
+&lt;pre tabindex="0">&lt;code>6.55 s ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+&lt;/code>&lt;/pre>&lt;p>We can plot the image:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>show_plot(tensor)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;img src="mandelbrot.svg" alt="">&lt;/p>
+&lt;h1 id="accelerating-with-numpy">Accelerating with Numpy&lt;/h1>
+&lt;p>We attempt to accelerate over our base case using Numpy. There are two main ways to do this: vectorization and parallelization.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22"># This is slower&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> &lt;span style="color:#008b45">compute_mandelbrot_np&lt;/span>(min_x, max_x, min_y, max_y, width, height, iters):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22"># create a matrix. Each element of the matrix corresponds to a pixel&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> x = np.linspace(min_x, max_x, width).reshape((&lt;span style="color:#b452cd">1&lt;/span>, width))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> y = np.linspace(min_y, max_y, height).reshape((height, &lt;span style="color:#b452cd">1&lt;/span>))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> C = np.tile(x, (height, &lt;span style="color:#b452cd">1&lt;/span>)) + &lt;span style="color:#b452cd">1&lt;/span>j * np.tile(y, (&lt;span style="color:#b452cd">1&lt;/span>, width))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> v_mandelbrot_kernel = np.vectorize(pyfunc=mandelbrot_kernel)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">return&lt;/span> v_mandelbrot_kernel(C, iters)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22"># This is much faster, but only return a bit map&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> &lt;span style="color:#008b45">compute_mandelbrot_np2&lt;/span>(min_x, max_x, min_y, max_y, width, height, iters):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#228b22"># create a matrix. Each element of the matrix corresponds to a pixel&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> x = np.linspace(min_x, max_x, width).reshape((&lt;span style="color:#b452cd">1&lt;/span>, width))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> y = np.linspace(min_y, max_y, height).reshape((height, &lt;span style="color:#b452cd">1&lt;/span>))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> C = np.tile(x, (height, &lt;span style="color:#b452cd">1&lt;/span>)) + &lt;span style="color:#b452cd">1&lt;/span>j * np.tile(y, (&lt;span style="color:#b452cd">1&lt;/span>, width))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Z = np.zeros((height, width), dtype=&lt;span style="color:#658b00">complex&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> M = np.full((height, width), &lt;span style="color:#8b008b;font-weight:bold">True&lt;/span>, dtype=&lt;span style="color:#658b00">bool&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> i &lt;span style="color:#8b008b">in&lt;/span> &lt;span style="color:#658b00">range&lt;/span>(iters):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> Z[M] = Z[M] * Z[M] + C[M]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> M[np.abs(Z) &amp;gt; &lt;span style="color:#b452cd">2&lt;/span>] = &lt;span style="color:#8b008b;font-weight:bold">False&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">return&lt;/span> np.uint8(np.flipud(&lt;span style="color:#b452cd">1&lt;/span> - M) * &lt;span style="color:#b452cd">255&lt;/span>)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The vectorization produces the identical result but not much speedup. The parallelization is much faster but it does
+not exit early when the series diverge so it only returns a black and white bit map.&lt;/p>
+&lt;p>Vectorization output:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>tensor = []
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>%timeit -n &lt;span style="color:#b452cd">1&lt;/span> -r &lt;span style="color:#b452cd">1&lt;/span> tensor.append(compute_mandelbrot_np(min_x, max_x, min_y, max_y, width, height, iters))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>tensor = tensor[&lt;span style="color:#b452cd">0&lt;/span>]
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre tabindex="0">&lt;code>6.37 s ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+&lt;/code>&lt;/pre>&lt;p>Parallelization output:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>tensor = []
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>%timeit -n &lt;span style="color:#b452cd">1&lt;/span> -r &lt;span style="color:#b452cd">1&lt;/span> tensor.append(compute_mandelbrot_np2(min_x, max_x, min_y, max_y, width, height, iters))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>tensor = tensor[&lt;span style="color:#b452cd">0&lt;/span>]
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;pre tabindex="0">&lt;code>1.78 s ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+&lt;/code>&lt;/pre>&lt;h1 id="accelerating-with-numba">Accelerating with Numba&lt;/h1>
+&lt;p>Numba is a just-in-time compiler for Python. It can compile Python code to machine code at runtime. It also works well with Numpy.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">from&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">numba&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">import&lt;/span> jit, int32, complex128
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">import&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">numpy&lt;/span> &lt;span style="color:#8b008b;font-weight:bold">as&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">np&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#707a7c">@jit&lt;/span>(nopython=&lt;span style="color:#8b008b;font-weight:bold">True&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> &lt;span style="color:#008b45">mandelbrot_kernel_nb&lt;/span>(x, y, max_iters):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#cd5555">&amp;#34;&amp;#34;&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#cd5555"> Given the real and imaginary parts of a complex number,
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#cd5555"> determine if it is a candidate for membership in the Mandelbrot
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#cd5555"> set given a fixed number of iterations.
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#cd5555"> &amp;#34;&amp;#34;&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> nv = &lt;span style="color:#b452cd">0&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> c = &lt;span style="color:#658b00">complex&lt;/span>(x,y)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> z = &lt;span style="color:#b452cd">0.0&lt;/span>j
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> i &lt;span style="color:#8b008b">in&lt;/span> &lt;span style="color:#658b00">range&lt;/span>(max_iters):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> z = z * z + c
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">if&lt;/span> (z.real * z.real + z.imag * z.imag) &amp;gt;= &lt;span style="color:#b452cd">4&lt;/span>:
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">break&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> nv += &lt;span style="color:#b452cd">1&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">return&lt;/span> nv
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#707a7c">@jit&lt;/span>(nopython=&lt;span style="color:#8b008b;font-weight:bold">True&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">def&lt;/span> &lt;span style="color:#008b45">compute_mandelbrot_nb&lt;/span>(min_x, max_x, min_y, max_y, image, iters):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> height = image.shape[&lt;span style="color:#b452cd">0&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> width = image.shape[&lt;span style="color:#b452cd">1&lt;/span>]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dx = (max_x - min_x) / width
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> dy = (max_y - min_y) / height
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> y = min_y
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> row &lt;span style="color:#8b008b">in&lt;/span> &lt;span style="color:#658b00">range&lt;/span>(height):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> x = min_x
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">for&lt;/span> col &lt;span style="color:#8b008b">in&lt;/span> &lt;span style="color:#658b00">range&lt;/span>(width):
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> image[row][col] = mandelbrot_kernel_nb(x, y, iters)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> x += dx
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> y += dy
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#8b008b;font-weight:bold">return&lt;/span> image
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>tensor = []
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>image = np.zeros((height, width), dtype=np.uint8)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>%timeit -n &lt;span style="color:#b452cd">1&lt;/span> -r &lt;span style="color:#b452cd">1&lt;/span> tensor.append(compute_mandelbrot_nb(min_x, max_x, min_y, max_y, image, iters))
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>tensor = tensor[&lt;span style="color:#b452cd">0&lt;/span>]
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Output:&lt;/p>
+&lt;pre tabindex="0">&lt;code>619 ms ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+&lt;/code>&lt;/pre>&lt;p>That is a 10x speedup over the base case.&lt;/p>
+&lt;h1 id="accelerating-with-rust">Accelerating with Rust&lt;/h1>
+&lt;p>We use a Python package called &lt;a href="https://github.com/mityax/rustimport">rustimport&lt;/a> which is based on &lt;a href="https://github.com/PyO3/pyo3">PyO3&lt;/a>
+and it can build Rust code dynamically in a Python project:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-python" data-lang="python">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">import&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">rustimport&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>rustimport.settings.release_mode = &lt;span style="color:#8b008b;font-weight:bold">True&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">import&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">rustimport.import_hook&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">import&lt;/span> &lt;span style="color:#008b45;text-decoration:underline">mandel&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>image = np.zeros((height, width), dtype=np.uint8)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>%timeit -n &lt;span style="color:#b452cd">1&lt;/span> -r &lt;span style="color:#b452cd">1&lt;/span> mandel.compute_mandelbrot_rs(min_x, max_x, min_y, max_y, width, height, image, iters)
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The &lt;code>import mandel&lt;/code> line above dynamically compiles the Rust code in the same directory called &lt;code>mandel.rs&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">40
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">41
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">42
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">43
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">44
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">45
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">46
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">47
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">48
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">49
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">50
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">51
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">52
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">53
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">54
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">55
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">56
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">57
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">58
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">59
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">60
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">61
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">62
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">63
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">64
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">65
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">66
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">67
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">68
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">69
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">70
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">71
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">72
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">73
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">74
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">75
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">76
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">77
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">78
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">79
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">80
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">81
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">82
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">83
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">84
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">// rustimport:pyo3
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#228b22">//: [dependencies]
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">//: ndarray = &amp;#34;0.15.6&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">//: numpy = &amp;#34;^0.18.0&amp;#34;
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#228b22">&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">use&lt;/span>&lt;span style="color:#bbb"> &lt;/span>pyo3::prelude::*;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">use&lt;/span>&lt;span style="color:#bbb"> &lt;/span>ndarray::{Dim,&lt;span style="color:#bbb"> &lt;/span>ArrayViewMut,&lt;span style="color:#bbb"> &lt;/span>IxDynImpl};&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">use&lt;/span>&lt;span style="color:#bbb"> &lt;/span>numpy::{PyArrayDyn};&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#1e889b">#[pyfunction]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">compute_mandelbrot_rs&lt;/span>(&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>_py: &lt;span style="color:#008b45;font-weight:bold">Python&lt;/span>&amp;lt;&amp;#39;&lt;span style="color:#658b00">_&lt;/span>&amp;gt;,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>min_x: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>max_x: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>min_y: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>max_y: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>width: &lt;span style="color:#00688b;font-weight:bold">u32&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>height: &lt;span style="color:#00688b;font-weight:bold">u32&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>t: &lt;span style="color:#8b008b;font-weight:bold">&amp;amp;&lt;/span>&lt;span style="color:#008b45;font-weight:bold">PyArrayDyn&lt;/span>&amp;lt;&lt;span style="color:#00688b;font-weight:bold">u8&lt;/span>&amp;gt;,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>iters: &lt;span style="color:#00688b;font-weight:bold">u8&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>)&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">mut&lt;/span>&lt;span style="color:#bbb"> &lt;/span>a&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">unsafe&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb"> &lt;/span>t.as_array_mut()&lt;span style="color:#bbb"> &lt;/span>};&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>compute_mandelbrot(min_x,&lt;span style="color:#bbb"> &lt;/span>max_x,&lt;span style="color:#bbb"> &lt;/span>min_y,&lt;span style="color:#bbb"> &lt;/span>max_y,&lt;span style="color:#bbb"> &lt;/span>width,&lt;span style="color:#bbb"> &lt;/span>height,&lt;span style="color:#bbb"> &lt;/span>iters,&lt;span style="color:#bbb"> &lt;/span>&amp;amp;&lt;span style="color:#8b008b;font-weight:bold">mut&lt;/span>&lt;span style="color:#bbb"> &lt;/span>a);&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#1e889b">#[derive(Clone, Copy)]&lt;/span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">struct&lt;/span> &lt;span style="color:#008b45;font-weight:bold">Complex&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">pub&lt;/span>&lt;span style="color:#bbb"> &lt;/span>a: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">pub&lt;/span>&lt;span style="color:#bbb"> &lt;/span>b: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">impl&lt;/span>&lt;span style="color:#bbb"> &lt;/span>std::ops::Add&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">for&lt;/span>&lt;span style="color:#bbb"> &lt;/span>Complex&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">type&lt;/span> &lt;span style="color:#008b45;font-weight:bold">Output&lt;/span>&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>Self;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">add&lt;/span>(self,&lt;span style="color:#bbb"> &lt;/span>rhs: &lt;span style="color:#008b45;font-weight:bold">Self&lt;/span>)&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#008b45;font-weight:bold">Self&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>Complex&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>a: &lt;span style="color:#008b45;font-weight:bold">self&lt;/span>.a&lt;span style="color:#bbb"> &lt;/span>+&lt;span style="color:#bbb"> &lt;/span>rhs.a,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>b: &lt;span style="color:#008b45;font-weight:bold">self&lt;/span>.b&lt;span style="color:#bbb"> &lt;/span>+&lt;span style="color:#bbb"> &lt;/span>rhs.b,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">impl&lt;/span>&lt;span style="color:#bbb"> &lt;/span>std::ops::Mul&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">for&lt;/span>&lt;span style="color:#bbb"> &lt;/span>Complex&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">type&lt;/span> &lt;span style="color:#008b45;font-weight:bold">Output&lt;/span>&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>Self;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">mul&lt;/span>(self,&lt;span style="color:#bbb"> &lt;/span>rhs: &lt;span style="color:#008b45;font-weight:bold">Self&lt;/span>)&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#008b45;font-weight:bold">Self&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>Complex&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>a: &lt;span style="color:#008b45;font-weight:bold">self&lt;/span>.a&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>rhs.a&lt;span style="color:#bbb"> &lt;/span>-&lt;span style="color:#bbb"> &lt;/span>self.b&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>rhs.b,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>b: &lt;span style="color:#008b45;font-weight:bold">self&lt;/span>.a&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>rhs.b&lt;span style="color:#bbb"> &lt;/span>+&lt;span style="color:#bbb"> &lt;/span>self.b&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>rhs.a&lt;span style="color:#bbb"> &lt;/span>,&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">impl&lt;/span>&lt;span style="color:#bbb"> &lt;/span>Complex&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">arg_sq&lt;/span>(self)&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span> {&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>self.a&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>self.a&lt;span style="color:#bbb"> &lt;/span>+&lt;span style="color:#bbb"> &lt;/span>self.b&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>self.b&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">mandelbrot&lt;/span>(x: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>y: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>max: &lt;span style="color:#00688b;font-weight:bold">u8&lt;/span>)&lt;span style="color:#bbb"> &lt;/span>-&amp;gt; &lt;span style="color:#00688b;font-weight:bold">u8&lt;/span> {&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">mut&lt;/span>&lt;span style="color:#bbb"> &lt;/span>z&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>Complex&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb"> &lt;/span>a: &lt;span style="color:#b452cd">0.0&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>b: &lt;span style="color:#b452cd">0.0&lt;/span>&lt;span style="color:#bbb"> &lt;/span>};&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>c&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>Complex&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb"> &lt;/span>a: &lt;span style="color:#008b45;font-weight:bold">x&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>b: &lt;span style="color:#008b45;font-weight:bold">y&lt;/span>&lt;span style="color:#bbb"> &lt;/span>};&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">mut&lt;/span>&lt;span style="color:#bbb"> &lt;/span>i&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">0&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">u8&lt;/span>;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">while&lt;/span>&lt;span style="color:#bbb"> &lt;/span>i&lt;span style="color:#bbb"> &lt;/span>&amp;lt;&lt;span style="color:#bbb"> &lt;/span>max&lt;span style="color:#bbb"> &lt;/span>&amp;amp;&amp;amp;&lt;span style="color:#bbb"> &lt;/span>z.arg_sq()&lt;span style="color:#bbb"> &lt;/span>&amp;lt;&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">4.0&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>z&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>z&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>z&lt;span style="color:#bbb"> &lt;/span>+&lt;span style="color:#bbb"> &lt;/span>c;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>i&lt;span style="color:#bbb"> &lt;/span>+=&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">1&lt;/span>;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">return&lt;/span>&lt;span style="color:#bbb"> &lt;/span>i;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">fn&lt;/span> &lt;span style="color:#008b45">compute_mandelbrot&lt;/span>(min_x: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>max_x: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>min_y: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>max_y: &lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>width: &lt;span style="color:#00688b;font-weight:bold">u32&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>height: &lt;span style="color:#00688b;font-weight:bold">u32&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>iters: &lt;span style="color:#00688b;font-weight:bold">u8&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>t: &lt;span style="color:#8b008b;font-weight:bold">&amp;amp;&lt;/span>&lt;span style="color:#008b45;font-weight:bold">mut&lt;/span>&lt;span style="color:#bbb"> &lt;/span>ArrayViewMut&amp;lt;&amp;#39;&lt;span style="color:#658b00">_&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#00688b;font-weight:bold">u8&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>Dim&amp;lt;IxDynImpl&amp;gt;&amp;gt;)&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>dx&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>(max_x&lt;span style="color:#bbb"> &lt;/span>-&lt;span style="color:#bbb"> &lt;/span>min_x)&lt;span style="color:#bbb"> &lt;/span>/&lt;span style="color:#bbb"> &lt;/span>width&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">as&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>dy&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>(max_y&lt;span style="color:#bbb"> &lt;/span>-&lt;span style="color:#bbb"> &lt;/span>min_y)&lt;span style="color:#bbb"> &lt;/span>/&lt;span style="color:#bbb"> &lt;/span>height&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">as&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">mut&lt;/span>&lt;span style="color:#bbb"> &lt;/span>y&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>min_y;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">for&lt;/span>&lt;span style="color:#bbb"> &lt;/span>row&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">in&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">0&lt;/span>..height&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">mut&lt;/span>&lt;span style="color:#bbb"> &lt;/span>x&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>min_x;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">for&lt;/span>&lt;span style="color:#bbb"> &lt;/span>col&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">in&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">0&lt;/span>..height{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>t[[row&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">as&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#00688b;font-weight:bold">usize&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>col&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">as&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#00688b;font-weight:bold">usize&lt;/span>]]&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>mandelbrot(x,&lt;span style="color:#bbb"> &lt;/span>y,&lt;span style="color:#bbb"> &lt;/span>iters);&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>x&lt;span style="color:#bbb"> &lt;/span>+=&lt;span style="color:#bbb"> &lt;/span>dx;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>y&lt;span style="color:#bbb"> &lt;/span>+=&lt;span style="color:#bbb"> &lt;/span>dy;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>As a good practice, we allocate the Numpy array in Python and pass it to Rust to fill in the values. This allows the Python
+GIL to manage the memory.&lt;/p>
+&lt;p>The output is:&lt;/p>
+&lt;pre tabindex="0">&lt;code>151 ms ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+&lt;/code>&lt;/pre>&lt;p>This is 46x improvement over the base case. Incidentally, this is the same speedup as the &lt;code>mandelbrot_0&lt;/code> and &lt;code>mandelbrot_1&lt;/code> in the
+part 1 of the Modular blog posts. So far everything is running on a single thread so we have explored neither the multi-thread capability
+of our Host nor the CPU SIMD capability. These will be explored in the future posts.&lt;/p>
+&lt;h1 id="summary">Summary&lt;/h1>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Method&lt;/th>
+&lt;th>Time (s)&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>Baseline&lt;/td>
+&lt;td>6.55&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Numpy vectorization&lt;/td>
+&lt;td>6.37&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Numpy parallelization&lt;/td>
+&lt;td>1.78&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Numba&lt;/td>
+&lt;td>0.619&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Rust&lt;/td>
+&lt;td>0.151&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+- https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/ - 2023 Li Chen</description></item><item><title>Is Rust a Good Language for Machine Learning?</title><link>https://aspcompiler.github.io/posts/rust-machine-learning/</link><pubDate>Mon, 04 Sep 2023 08:09:34 -0700</pubDate><guid>https://aspcompiler.github.io/posts/rust-machine-learning/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/rust-machine-learning/ -&lt;h1 id="introduction">Introduction&lt;/h1>
 &lt;p>Rust has been known for its performance and memory/thread safety. However, it takes an ecosystem to be successful. So far, Rust has found
 a lot of success in network programming and bit coin mining. Rust has an excellent support for &lt;code>async&lt;/code> making it a great language any time
 we need distributed systems.&lt;/p>

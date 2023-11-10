@@ -1,0 +1,468 @@
+<!doctype html><html><head><title>How Rust gets an x speedup over Python - Part 1</title><meta charset=utf-8><meta name=X-UA-Compatible content="IE=edge"><meta name=google-site-verification content><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name=viewport><meta content="telephone=no" name=format-detection><meta name=description content><meta name=renderer content="webkit"><meta name=theme-color content="#ffffff"><script src=/js/toc.js></script>
+<link type=text/css rel=stylesheet href=/vendor/css/bootstrap.min.css><link rel=stylesheet href=/scss/journal.min.e78ecf1f01bdd175a52616472d7f6c77fa0d72eb91b15a27ce24fb7d302a6aa2.css integrity="sha256-547PHwG90XWlJhZHLX9sd/oNcuuRsVonziT7fTAqaqI=" media=screen><link rel=stylesheet href=/scss/dark-mode.min.e96cc014086ea3bea59fb4923f8c19d6b203a7af229ee5f9599c0a4cb90e3bbd.css integrity="sha256-6WzAFAhuo76ln7SSP4wZ1rIDp68inuX5WZwKTLkOO70=" media=screen><link rel=stylesheet href="https://fonts.googleapis.com/css?family=Material+Icons"></head><body><div id=app><div id=sideContainer class=side-container><a class="a-block nav-head false" href=https://aspcompiler.github.io/><div class=nav-title>Li Chen's blog</div><div class=nav-subtitle>Share my research and learning.</div></a><div class=nav-link-list><a class="a-block nav-link-item false" href=/about>About</a>
+<a class="a-block nav-link-item active" href=/posts>Posts</a>
+<a class="a-block nav-link-item false" href=/categories>Categories</a>
+<a class="a-block nav-link-item false" href=/tags>Tags</a>
+<a class="a-block nav-link-item false" href=/index.xml>RSS Feed</a></div><div class=nav-footer>Hugo Theme <a href=https://github.com/amazingrise/hugo-theme-diary>Diary</a> by <a href=https://risehere.net/>Rise</a><br>Ported from <a href=https://mak1t0.cc/ target=_blank rel="noreferrer noopener">Makito</a>'s <a href=https://github.com/SumiMakito/hexo-theme-journal/ target=_blank rel="noreferrer noopener">Journal.</a><br><br>&copy;
+2023 Li Chen</div></div><div id=extraContainer class=extra-container><div class="toc animated-visibility" :class="{ invisible: scrollY <= 140 }"><div class=toc-content><center>- CATALOG -</center><ul><li><a href=#introduction onclick="onNavClick(`#introduction-nav`)" id=introduction-nav>Introduction</a></li><li><a href=#the-baseline onclick="onNavClick(`#the-baseline-nav`)" id=the-baseline-nav>The baseline</a></li><li><a href=#accelerating-with-numpy onclick="onNavClick(`#accelerating-with-numpy-nav`)" id=accelerating-with-numpy-nav>Accelerating with Numpy</a></li><li><a href=#accelerating-with-numba onclick="onNavClick(`#accelerating-with-numba-nav`)" id=accelerating-with-numba-nav>Accelerating with Numba</a></li><li><a href=#accelerating-with-rust onclick="onNavClick(`#accelerating-with-rust-nav`)" id=accelerating-with-rust-nav>Accelerating with Rust</a></li><li><a href=#summary onclick="onNavClick(`#summary-nav`)" id=summary-nav>Summary</a></li></ul></div></div><div class=pagination><a id=globalBackToTop class="pagination-action animated-visibility" href=#top :class="{ invisible: scrollY == 0 }"><i class="material-icons pagination-action-icon">keyboard_arrow_up</i></a>
+<a type=button class=pagination-action id=darkModeToggleButton><span class="material-icons pagination-action-icon" id=darkModeToggleIcon>dark_mode</span></a></div></div><div class=single-column-drawer-container id=drawer v-bind:class="{ 'single-column-drawer-container-active': isDrawerOpen }"><div class=drawer-content><div class=drawer-menu><a class="a-block drawer-menu-item false" href=/about>About</a>
+<a class="a-block drawer-menu-item active" href=/posts>Posts</a>
+<a class="a-block drawer-menu-item false" href=/categories>Categories</a>
+<a class="a-block drawer-menu-item false" href=/tags>Tags</a>
+<a class="a-block drawer-menu-item false" href=/index.xml>RSS Feed</a><div class=toc><div class=toc-content><center>- CATALOG -</center><ul><li><a href=#introduction onclick="onNavClick(`#introduction-nav`)" id=introduction-nav>Introduction</a></li><li><a href=#the-baseline onclick="onNavClick(`#the-baseline-nav`)" id=the-baseline-nav>The baseline</a></li><li><a href=#accelerating-with-numpy onclick="onNavClick(`#accelerating-with-numpy-nav`)" id=accelerating-with-numpy-nav>Accelerating with Numpy</a></li><li><a href=#accelerating-with-numba onclick="onNavClick(`#accelerating-with-numba-nav`)" id=accelerating-with-numba-nav>Accelerating with Numba</a></li><li><a href=#accelerating-with-rust onclick="onNavClick(`#accelerating-with-rust-nav`)" id=accelerating-with-rust-nav>Accelerating with Rust</a></li><li><a href=#summary onclick="onNavClick(`#summary-nav`)" id=summary-nav>Summary</a></li></ul></div></div></div></div></div><transition name=fade><div id=drawer-mask v-bind:class="{ 'single-column-drawer-mask': mounted }" v-if=isDrawerOpen v-on:click=toggleDrawer></div></transition><nav id=navBar class="navbar sticky-top navbar-light single-column-nav-container"><div id=navBackground class=nav-background></div><div class="container container-narrow nav-content"><button id=nav_dropdown_btn class=nav-dropdown-toggle type=button v-on:click=toggleDrawer>
+<i class=material-icons>menu</i></button>
+<a id=navTitle class=navbar-brand href=https://aspcompiler.github.io/>Li Chen's blog</a>
+<button type=button class=nav-darkmode-toggle id=darkModeToggleButton2>
+<i class=material-icons id=darkModeToggleIcon2>dark_mode</i></button></div></nav><div class=single-column-header-container id=pageHead v-bind:style="{ transform: 'translateZ(0px) translateY('+.3*scrollY+'px)', opacity: 1-navOpacity }"><a href=https://aspcompiler.github.io/><div class=single-column-header-title>Li Chen's blog</div><div class=single-column-header-subtitle>Share my research and learning.</div></a></div><div id=content><div id=streamContainer class=stream-container><div class="post-list-container post-list-container-shadow"><div class=post><div class=post-head-wrapper-text-only><div class=post-title>How Rust gets an x speedup over Python - Part 1<div class=post-meta><time itemprop=datePublished>2023-11-10 08:34</time>
+<i class=material-icons>schedule</i>
+6 min
+42 s.</div></div></div><div class=post-body-wrapper><div class=post-body v-pre><h1 id=introduction>Introduction</h1><p>Inspired by the Modular bog series, <a href=https://www.modular.com/blog/how-mojo-gets-a-35-000x-speedup-over-python-part-1>part 1</a>,
+<a href=https://www.modular.com/blog/how-mojo-gets-a-35-000x-speedup-over-python-part-2>part 2</a>, and
+<a href=https://www.modular.com/blog/mojo-a-journey-to-68-000x-speedup-over-python-part-3>part 3</a>, I want to see what kind of speedup
+I can get with Rust.</p><h1 id=the-baseline>The baseline</h1><p>I will use the same Mandelbrot set example. For an explanation of the algorithm, see the part 1 of the Modular blog posts linked above.</p><div class=highlight><div style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#8b008b;font-weight:700>import</span> <span style=color:#008b45;text-decoration:underline>numpy</span> <span style=color:#8b008b;font-weight:700>as</span> <span style=color:#008b45;text-decoration:underline>np</span>
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>import</span> <span style=color:#008b45;text-decoration:underline>matplotlib.pyplot</span> <span style=color:#8b008b;font-weight:700>as</span> <span style=color:#008b45;text-decoration:underline>plt</span>
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>import</span> <span style=color:#008b45;text-decoration:underline>matplotlib.colors</span> <span style=color:#8b008b;font-weight:700>as</span> <span style=color:#008b45;text-decoration:underline>colors</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>def</span> <span style=color:#008b45>mandelbrot_kernel</span>(c, max_iters): 
+</span></span><span style=display:flex><span>  z = c
+</span></span><span style=display:flex><span>  nv = <span style=color:#b452cd>0</span>
+</span></span><span style=display:flex><span>  <span style=color:#8b008b;font-weight:700>for</span> i <span style=color:#8b008b>in</span> <span style=color:#658b00>range</span>(max_iters):
+</span></span><span style=display:flex><span>    <span style=color:#8b008b;font-weight:700>if</span> <span style=color:#658b00>abs</span>(z) &gt; <span style=color:#b452cd>2</span>:
+</span></span><span style=display:flex><span>      <span style=color:#8b008b;font-weight:700>break</span>
+</span></span><span style=display:flex><span>    z = z*z + c
+</span></span><span style=display:flex><span>    nv += <span style=color:#b452cd>1</span>
+</span></span><span style=display:flex><span>  <span style=color:#8b008b;font-weight:700>return</span> nv
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>def</span> <span style=color:#008b45>compute_mandelbrot</span>(min_x, max_x, min_y, max_y, width, height, iters):
+</span></span><span style=display:flex><span>    <span style=color:#228b22># create a matrix. Each element of the matrix corresponds to a pixel</span>
+</span></span><span style=display:flex><span>    t = [[<span style=color:#b452cd>0</span> <span style=color:#8b008b;font-weight:700>for</span> _ <span style=color:#8b008b>in</span> <span style=color:#658b00>range</span>(width)] <span style=color:#8b008b;font-weight:700>for</span> _ <span style=color:#8b008b>in</span> <span style=color:#658b00>range</span>(height)]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    dx = (max_x - min_x) / width
+</span></span><span style=display:flex><span>    dy = (max_y - min_y) / height
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    y = min_y
+</span></span><span style=display:flex><span>    <span style=color:#8b008b;font-weight:700>for</span> row <span style=color:#8b008b>in</span> <span style=color:#658b00>range</span>(height):
+</span></span><span style=display:flex><span>        x = min_x
+</span></span><span style=display:flex><span>        <span style=color:#8b008b;font-weight:700>for</span> col <span style=color:#8b008b>in</span> <span style=color:#658b00>range</span>(width):
+</span></span><span style=display:flex><span>            t[row][col] = mandelbrot_kernel(<span style=color:#658b00>complex</span>(x, y), iters)
+</span></span><span style=display:flex><span>            x += dx
+</span></span><span style=display:flex><span>        y += dy
+</span></span><span style=display:flex><span>    <span style=color:#8b008b;font-weight:700>return</span> np.array(t)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>def</span> <span style=color:#008b45>show_plot</span>(numpy_array):
+</span></span><span style=display:flex><span>    scale = <span style=color:#b452cd>10</span>
+</span></span><span style=display:flex><span>    dpi = <span style=color:#b452cd>64</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    height, width = numpy_array.shape
+</span></span><span style=display:flex><span>    fig = plt.figure(<span style=color:#b452cd>1</span>, [scale, scale * height // width], dpi)
+</span></span><span style=display:flex><span>    ax = fig.add_axes([<span style=color:#b452cd>0.0</span>, <span style=color:#b452cd>0.0</span>, <span style=color:#b452cd>1.0</span>, <span style=color:#b452cd>1.0</span>], <span style=color:#8b008b;font-weight:700>False</span>, <span style=color:#b452cd>1</span>)
+</span></span><span style=display:flex><span>    light = colors.LightSource(<span style=color:#b452cd>315</span>, <span style=color:#b452cd>10</span>, <span style=color:#b452cd>0</span>, <span style=color:#b452cd>1</span>, <span style=color:#b452cd>1</span>, <span style=color:#b452cd>0</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    image = light.shade(numpy_array, plt.cm.hot, colors.PowerNorm(<span style=color:#b452cd>0.3</span>), <span style=color:#cd5555>&#34;hsv&#34;</span>, <span style=color:#b452cd>0</span>, <span style=color:#b452cd>0</span>, <span style=color:#b452cd>1.5</span>)
+</span></span><span style=display:flex><span>    plt.imshow(image)
+</span></span><span style=display:flex><span>    plt.axis(<span style=color:#cd5555>&#34;off&#34;</span>)
+</span></span><span style=display:flex><span>    plt.show()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>width = <span style=color:#b452cd>960</span>
+</span></span><span style=display:flex><span>height = <span style=color:#b452cd>960</span>
+</span></span><span style=display:flex><span>min_x = -<span style=color:#b452cd>2.0</span>
+</span></span><span style=display:flex><span>max_x = <span style=color:#b452cd>0.6</span>
+</span></span><span style=display:flex><span>min_y = -<span style=color:#b452cd>1.5</span>
+</span></span><span style=display:flex><span>max_y = <span style=color:#b452cd>1.5</span>
+</span></span><span style=display:flex><span>iters = <span style=color:#b452cd>200</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>tensor = []
+</span></span><span style=display:flex><span>%timeit -n <span style=color:#b452cd>1</span> -r <span style=color:#b452cd>1</span> tensor.append(compute_mandelbrot(min_x, max_x, min_y, max_y, width, height, iters))
+</span></span><span style=display:flex><span>tensor = tensor[<span style=color:#b452cd>0</span>]
+</span></span></code></pre></td></tr></table></div></div><p>This outputs:</p><pre tabindex=0><code>6.55 s ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+</code></pre><p>We can plot the image:</p><div class=highlight><div style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span>show_plot(tensor)
+</span></span></code></pre></td></tr></table></div></div><p><img src=mandelbrot.svg alt></p><h1 id=accelerating-with-numpy>Accelerating with Numpy</h1><p>We attempt to accelerate over our base case using Numpy. There are two main ways to do this: vectorization and parallelization.</p><div class=highlight><div style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#228b22># This is slower</span>
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>def</span> <span style=color:#008b45>compute_mandelbrot_np</span>(min_x, max_x, min_y, max_y, width, height, iters):
+</span></span><span style=display:flex><span>    <span style=color:#228b22># create a matrix. Each element of the matrix corresponds to a pixel</span>
+</span></span><span style=display:flex><span>    x = np.linspace(min_x, max_x, width).reshape((<span style=color:#b452cd>1</span>, width))
+</span></span><span style=display:flex><span>    y = np.linspace(min_y, max_y, height).reshape((height, <span style=color:#b452cd>1</span>))
+</span></span><span style=display:flex><span>    C = np.tile(x, (height, <span style=color:#b452cd>1</span>)) + <span style=color:#b452cd>1</span>j * np.tile(y, (<span style=color:#b452cd>1</span>, width))
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    v_mandelbrot_kernel = np.vectorize(pyfunc=mandelbrot_kernel)
+</span></span><span style=display:flex><span>    <span style=color:#8b008b;font-weight:700>return</span> v_mandelbrot_kernel(C, iters)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#228b22># This is much faster, but only return a bit map</span>
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>def</span> <span style=color:#008b45>compute_mandelbrot_np2</span>(min_x, max_x, min_y, max_y, width, height, iters):
+</span></span><span style=display:flex><span>    <span style=color:#228b22># create a matrix. Each element of the matrix corresponds to a pixel</span>
+</span></span><span style=display:flex><span>    x = np.linspace(min_x, max_x, width).reshape((<span style=color:#b452cd>1</span>, width))
+</span></span><span style=display:flex><span>    y = np.linspace(min_y, max_y, height).reshape((height, <span style=color:#b452cd>1</span>))
+</span></span><span style=display:flex><span>    C = np.tile(x, (height, <span style=color:#b452cd>1</span>)) + <span style=color:#b452cd>1</span>j * np.tile(y, (<span style=color:#b452cd>1</span>, width))
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    Z = np.zeros((height, width), dtype=<span style=color:#658b00>complex</span>)
+</span></span><span style=display:flex><span>    M = np.full((height, width), <span style=color:#8b008b;font-weight:700>True</span>, dtype=<span style=color:#658b00>bool</span>)
+</span></span><span style=display:flex><span>    <span style=color:#8b008b;font-weight:700>for</span> i <span style=color:#8b008b>in</span> <span style=color:#658b00>range</span>(iters):
+</span></span><span style=display:flex><span>        Z[M] = Z[M] * Z[M] + C[M]
+</span></span><span style=display:flex><span>        M[np.abs(Z) &gt; <span style=color:#b452cd>2</span>] = <span style=color:#8b008b;font-weight:700>False</span>
+</span></span><span style=display:flex><span>    <span style=color:#8b008b;font-weight:700>return</span> np.uint8(np.flipud(<span style=color:#b452cd>1</span> - M) * <span style=color:#b452cd>255</span>)
+</span></span></code></pre></td></tr></table></div></div><p>The vectorization produces the identical result but not much speedup. The parallelization is much faster but it does
+not exit early when the series diverge so it only returns a black and white bit map.</p><p>Vectorization output:</p><div class=highlight><div style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span>tensor = []
+</span></span><span style=display:flex><span>%timeit -n <span style=color:#b452cd>1</span> -r <span style=color:#b452cd>1</span> tensor.append(compute_mandelbrot_np(min_x, max_x, min_y, max_y, width, height, iters))
+</span></span><span style=display:flex><span>tensor = tensor[<span style=color:#b452cd>0</span>]
+</span></span></code></pre></td></tr></table></div></div><pre tabindex=0><code>6.37 s ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+</code></pre><p>Parallelization output:</p><div class=highlight><div style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span>tensor = []
+</span></span><span style=display:flex><span>%timeit -n <span style=color:#b452cd>1</span> -r <span style=color:#b452cd>1</span> tensor.append(compute_mandelbrot_np2(min_x, max_x, min_y, max_y, width, height, iters))
+</span></span><span style=display:flex><span>tensor = tensor[<span style=color:#b452cd>0</span>]
+</span></span></code></pre></td></tr></table></div></div><pre tabindex=0><code>1.78 s ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+</code></pre><h1 id=accelerating-with-numba>Accelerating with Numba</h1><p>Numba is a just-in-time compiler for Python. It can compile Python code to machine code at runtime. It also works well with Numpy.</p><div class=highlight><div style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#8b008b;font-weight:700>from</span> <span style=color:#008b45;text-decoration:underline>numba</span> <span style=color:#8b008b;font-weight:700>import</span> jit, int32, complex128
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>import</span> <span style=color:#008b45;text-decoration:underline>numpy</span> <span style=color:#8b008b;font-weight:700>as</span> <span style=color:#008b45;text-decoration:underline>np</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#707a7c>@jit</span>(nopython=<span style=color:#8b008b;font-weight:700>True</span>)
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>def</span> <span style=color:#008b45>mandelbrot_kernel_nb</span>(x, y, max_iters):
+</span></span><span style=display:flex><span>    <span style=color:#cd5555>&#34;&#34;&#34;
+</span></span></span><span style=display:flex><span><span style=color:#cd5555>    Given the real and imaginary parts of a complex number,
+</span></span></span><span style=display:flex><span><span style=color:#cd5555>    determine if it is a candidate for membership in the Mandelbrot
+</span></span></span><span style=display:flex><span><span style=color:#cd5555>    set given a fixed number of iterations.
+</span></span></span><span style=display:flex><span><span style=color:#cd5555>    &#34;&#34;&#34;</span>
+</span></span><span style=display:flex><span>    nv = <span style=color:#b452cd>0</span>
+</span></span><span style=display:flex><span>    c = <span style=color:#658b00>complex</span>(x,y)
+</span></span><span style=display:flex><span>    z = <span style=color:#b452cd>0.0</span>j
+</span></span><span style=display:flex><span>    <span style=color:#8b008b;font-weight:700>for</span> i <span style=color:#8b008b>in</span> <span style=color:#658b00>range</span>(max_iters):
+</span></span><span style=display:flex><span>        z = z * z + c
+</span></span><span style=display:flex><span>        <span style=color:#8b008b;font-weight:700>if</span> (z.real * z.real + z.imag * z.imag) &gt;= <span style=color:#b452cd>4</span>:
+</span></span><span style=display:flex><span>            <span style=color:#8b008b;font-weight:700>break</span>
+</span></span><span style=display:flex><span>        nv += <span style=color:#b452cd>1</span>
+</span></span><span style=display:flex><span>    <span style=color:#8b008b;font-weight:700>return</span> nv
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#707a7c>@jit</span>(nopython=<span style=color:#8b008b;font-weight:700>True</span>)
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>def</span> <span style=color:#008b45>compute_mandelbrot_nb</span>(min_x, max_x, min_y, max_y, image, iters):
+</span></span><span style=display:flex><span>    height = image.shape[<span style=color:#b452cd>0</span>]
+</span></span><span style=display:flex><span>    width = image.shape[<span style=color:#b452cd>1</span>]
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    dx = (max_x - min_x) / width
+</span></span><span style=display:flex><span>    dy = (max_y - min_y) / height
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    y = min_y
+</span></span><span style=display:flex><span>    <span style=color:#8b008b;font-weight:700>for</span> row <span style=color:#8b008b>in</span> <span style=color:#658b00>range</span>(height):
+</span></span><span style=display:flex><span>        x = min_x
+</span></span><span style=display:flex><span>        <span style=color:#8b008b;font-weight:700>for</span> col <span style=color:#8b008b>in</span> <span style=color:#658b00>range</span>(width):
+</span></span><span style=display:flex><span>            image[row][col] = mandelbrot_kernel_nb(x, y, iters)
+</span></span><span style=display:flex><span>            x += dx
+</span></span><span style=display:flex><span>        y += dy
+</span></span><span style=display:flex><span>    <span style=color:#8b008b;font-weight:700>return</span> image
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>tensor = []
+</span></span><span style=display:flex><span>image = np.zeros((height, width), dtype=np.uint8)
+</span></span><span style=display:flex><span>%timeit -n <span style=color:#b452cd>1</span> -r <span style=color:#b452cd>1</span> tensor.append(compute_mandelbrot_nb(min_x, max_x, min_y, max_y, image, iters))
+</span></span><span style=display:flex><span>tensor = tensor[<span style=color:#b452cd>0</span>]
+</span></span></code></pre></td></tr></table></div></div><p>Output:</p><pre tabindex=0><code>619 ms ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+</code></pre><p>That is a 10x speedup over the base case.</p><h1 id=accelerating-with-rust>Accelerating with Rust</h1><p>We use a Python package called <a href=https://github.com/mityax/rustimport>rustimport</a> which is based on <a href=https://github.com/PyO3/pyo3>PyO3</a>
+and it can build Rust code dynamically in a Python project:</p><div class=highlight><div style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">7
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#8b008b;font-weight:700>import</span> <span style=color:#008b45;text-decoration:underline>rustimport</span>
+</span></span><span style=display:flex><span>rustimport.settings.release_mode = <span style=color:#8b008b;font-weight:700>True</span>
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>import</span> <span style=color:#008b45;text-decoration:underline>rustimport.import_hook</span>
+</span></span><span style=display:flex><span><span style=color:#8b008b;font-weight:700>import</span> <span style=color:#008b45;text-decoration:underline>mandel</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>image = np.zeros((height, width), dtype=np.uint8)
+</span></span><span style=display:flex><span>%timeit -n <span style=color:#b452cd>1</span> -r <span style=color:#b452cd>1</span> mandel.compute_mandelbrot_rs(min_x, max_x, min_y, max_y, width, height, image, iters)
+</span></span></code></pre></td></tr></table></div></div><p>The <code>import mandel</code> line above dynamically compiles the Rust code in the same directory called <code>mandel.rs</code>:</p><div class=highlight><div style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><table style=border-spacing:0;padding:0;margin:0;border:0><tr><td style=vertical-align:top;padding:0;margin:0;border:0><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">10
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">11
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">12
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">13
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">14
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">15
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">16
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">17
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">18
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">19
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">20
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">21
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">22
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">23
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">24
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">25
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">26
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">27
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">28
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">29
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">30
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">31
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">32
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">33
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">34
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">35
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">36
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">37
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">38
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">39
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">40
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">41
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">42
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">43
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">44
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">45
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">46
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">47
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">48
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">49
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">50
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">51
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">52
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">53
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">54
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">55
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">56
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">57
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">58
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">59
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">60
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">61
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">62
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">63
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">64
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">65
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">66
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">67
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">68
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">69
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">70
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">71
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">72
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">73
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">74
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">75
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">76
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">77
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">78
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">79
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">80
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">81
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">82
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">83
+</span><span style="white-space:pre;user-select:none;margin-right:.4em;padding:0 .4em;color:#7f7f7f">84
+</span></code></pre></td><td style=vertical-align:top;padding:0;margin:0;border:0;width:100%><pre tabindex=0 style=background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-rust data-lang=rust><span style=display:flex><span><span style=color:#228b22>// rustimport:pyo3
+</span></span></span><span style=display:flex><span><span style=color:#228b22></span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#228b22>//: [dependencies]
+</span></span></span><span style=display:flex><span><span style=color:#228b22>//: ndarray = &#34;0.15.6&#34;
+</span></span></span><span style=display:flex><span><span style=color:#228b22>//: numpy = &#34;^0.18.0&#34;
+</span></span></span><span style=display:flex><span><span style=color:#228b22></span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#8b008b;font-weight:700>use</span><span style=color:#bbb> </span>pyo3::prelude::*;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#8b008b;font-weight:700>use</span><span style=color:#bbb> </span>ndarray::{Dim,<span style=color:#bbb> </span>ArrayViewMut,<span style=color:#bbb> </span>IxDynImpl};<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#8b008b;font-weight:700>use</span><span style=color:#bbb> </span>numpy::{PyArrayDyn};<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#1e889b>#[pyfunction]</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#8b008b;font-weight:700>fn</span> <span style=color:#008b45>compute_mandelbrot_rs</span>(<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>_py: <span style=color:#008b45;font-weight:700>Python</span>&lt;&#39;<span style=color:#658b00>_</span>&gt;,<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>min_x: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb> 
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>max_x: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb> 
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>min_y: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb> 
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>max_y: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb> 
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>width: <span style=color:#00688b;font-weight:700>u32</span>,<span style=color:#bbb> 
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>height: <span style=color:#00688b;font-weight:700>u32</span>,<span style=color:#bbb> 
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>t: <span style=color:#8b008b;font-weight:700>&amp;</span><span style=color:#008b45;font-weight:700>PyArrayDyn</span>&lt;<span style=color:#00688b;font-weight:700>u8</span>&gt;,<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>iters: <span style=color:#00688b;font-weight:700>u8</span>,<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>)<span style=color:#bbb> </span>{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>let</span><span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>mut</span><span style=color:#bbb> </span>a<span style=color:#bbb> </span>=<span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>unsafe</span><span style=color:#bbb> </span>{<span style=color:#bbb> </span>t.as_array_mut()<span style=color:#bbb> </span>};<span style=color:#bbb> 
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>compute_mandelbrot(min_x,<span style=color:#bbb> </span>max_x,<span style=color:#bbb> </span>min_y,<span style=color:#bbb> </span>max_y,<span style=color:#bbb> </span>width,<span style=color:#bbb> </span>height,<span style=color:#bbb> </span>iters,<span style=color:#bbb> </span>&amp;<span style=color:#8b008b;font-weight:700>mut</span><span style=color:#bbb> </span>a);<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#1e889b>#[derive(Clone, Copy)]</span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#8b008b;font-weight:700>struct</span> <span style=color:#008b45;font-weight:700>Complex</span><span style=color:#bbb> </span>{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>pub</span><span style=color:#bbb> </span>a: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>pub</span><span style=color:#bbb> </span>b: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#8b008b;font-weight:700>impl</span><span style=color:#bbb> </span>std::ops::Add<span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>for</span><span style=color:#bbb> </span>Complex<span style=color:#bbb> </span>{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>type</span> <span style=color:#008b45;font-weight:700>Output</span><span style=color:#bbb> </span>=<span style=color:#bbb> </span>Self;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>fn</span> <span style=color:#008b45>add</span>(self,<span style=color:#bbb> </span>rhs: <span style=color:#008b45;font-weight:700>Self</span>)<span style=color:#bbb> </span>-&gt; <span style=color:#008b45;font-weight:700>Self</span><span style=color:#bbb> </span>{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>Complex<span style=color:#bbb> </span>{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span>a: <span style=color:#008b45;font-weight:700>self</span>.a<span style=color:#bbb> </span>+<span style=color:#bbb> </span>rhs.a,<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span>b: <span style=color:#008b45;font-weight:700>self</span>.b<span style=color:#bbb> </span>+<span style=color:#bbb> </span>rhs.b,<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#8b008b;font-weight:700>impl</span><span style=color:#bbb> </span>std::ops::Mul<span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>for</span><span style=color:#bbb> </span>Complex<span style=color:#bbb> </span>{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>type</span> <span style=color:#008b45;font-weight:700>Output</span><span style=color:#bbb> </span>=<span style=color:#bbb> </span>Self;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>fn</span> <span style=color:#008b45>mul</span>(self,<span style=color:#bbb> </span>rhs: <span style=color:#008b45;font-weight:700>Self</span>)<span style=color:#bbb> </span>-&gt; <span style=color:#008b45;font-weight:700>Self</span><span style=color:#bbb> </span>{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>Complex<span style=color:#bbb> </span>{<span style=color:#bbb> 
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span>a: <span style=color:#008b45;font-weight:700>self</span>.a<span style=color:#bbb> </span>*<span style=color:#bbb> </span>rhs.a<span style=color:#bbb> </span>-<span style=color:#bbb> </span>self.b<span style=color:#bbb> </span>*<span style=color:#bbb> </span>rhs.b,<span style=color:#bbb> 
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span>b: <span style=color:#008b45;font-weight:700>self</span>.a<span style=color:#bbb> </span>*<span style=color:#bbb> </span>rhs.b<span style=color:#bbb> </span>+<span style=color:#bbb> </span>self.b<span style=color:#bbb> </span>*<span style=color:#bbb> </span>rhs.a<span style=color:#bbb> </span>,<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#8b008b;font-weight:700>impl</span><span style=color:#bbb> </span>Complex<span style=color:#bbb> </span>{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>fn</span> <span style=color:#008b45>arg_sq</span>(self)<span style=color:#bbb> </span>-&gt; <span style=color:#00688b;font-weight:700>f32</span> {<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>self.a<span style=color:#bbb> </span>*<span style=color:#bbb> </span>self.a<span style=color:#bbb> </span>+<span style=color:#bbb> </span>self.b<span style=color:#bbb> </span>*<span style=color:#bbb> </span>self.b<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#8b008b;font-weight:700>fn</span> <span style=color:#008b45>mandelbrot</span>(x: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb> </span>y: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb> </span>max: <span style=color:#00688b;font-weight:700>u8</span>)<span style=color:#bbb> </span>-&gt; <span style=color:#00688b;font-weight:700>u8</span> {<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>let</span><span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>mut</span><span style=color:#bbb> </span>z<span style=color:#bbb> </span>=<span style=color:#bbb> </span>Complex<span style=color:#bbb> </span>{<span style=color:#bbb> </span>a: <span style=color:#b452cd>0.0</span>,<span style=color:#bbb> </span>b: <span style=color:#b452cd>0.0</span><span style=color:#bbb> </span>};<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>let</span><span style=color:#bbb> </span>c<span style=color:#bbb> </span>=<span style=color:#bbb> </span>Complex<span style=color:#bbb> </span>{<span style=color:#bbb> </span>a: <span style=color:#008b45;font-weight:700>x</span>,<span style=color:#bbb> </span>b: <span style=color:#008b45;font-weight:700>y</span><span style=color:#bbb> </span>};<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>let</span><span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>mut</span><span style=color:#bbb> </span>i<span style=color:#bbb> </span>=<span style=color:#bbb> </span><span style=color:#b452cd>0</span><span style=color:#8b008b;font-weight:700>u8</span>;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>while</span><span style=color:#bbb> </span>i<span style=color:#bbb> </span>&lt;<span style=color:#bbb> </span>max<span style=color:#bbb> </span>&amp;&amp;<span style=color:#bbb> </span>z.arg_sq()<span style=color:#bbb> </span>&lt;<span style=color:#bbb> </span><span style=color:#b452cd>4.0</span><span style=color:#bbb> </span>{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>z<span style=color:#bbb> </span>=<span style=color:#bbb> </span>z<span style=color:#bbb> </span>*<span style=color:#bbb> </span>z<span style=color:#bbb> </span>+<span style=color:#bbb> </span>c;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>i<span style=color:#bbb> </span>+=<span style=color:#bbb> </span><span style=color:#b452cd>1</span>;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>return</span><span style=color:#bbb> </span>i;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span><span style=color:#8b008b;font-weight:700>fn</span> <span style=color:#008b45>compute_mandelbrot</span>(min_x: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb> </span>max_x: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb> </span>min_y: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb> </span>max_y: <span style=color:#00688b;font-weight:700>f32</span>,<span style=color:#bbb> </span>width: <span style=color:#00688b;font-weight:700>u32</span>,<span style=color:#bbb> </span>height: <span style=color:#00688b;font-weight:700>u32</span>,<span style=color:#bbb> </span>iters: <span style=color:#00688b;font-weight:700>u8</span>,<span style=color:#bbb> </span>t: <span style=color:#8b008b;font-weight:700>&amp;</span><span style=color:#008b45;font-weight:700>mut</span><span style=color:#bbb> </span>ArrayViewMut&lt;&#39;<span style=color:#658b00>_</span>,<span style=color:#bbb> </span><span style=color:#00688b;font-weight:700>u8</span>,<span style=color:#bbb> </span>Dim&lt;IxDynImpl&gt;&gt;)<span style=color:#bbb> </span>{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>let</span><span style=color:#bbb> </span>dx<span style=color:#bbb> </span>=<span style=color:#bbb> </span>(max_x<span style=color:#bbb> </span>-<span style=color:#bbb> </span>min_x)<span style=color:#bbb> </span>/<span style=color:#bbb> </span>width<span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>as</span><span style=color:#bbb> </span><span style=color:#00688b;font-weight:700>f32</span>;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>let</span><span style=color:#bbb> </span>dy<span style=color:#bbb> </span>=<span style=color:#bbb> </span>(max_y<span style=color:#bbb> </span>-<span style=color:#bbb> </span>min_y)<span style=color:#bbb> </span>/<span style=color:#bbb> </span>height<span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>as</span><span style=color:#bbb> </span><span style=color:#00688b;font-weight:700>f32</span>;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>let</span><span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>mut</span><span style=color:#bbb> </span>y<span style=color:#bbb> </span>=<span style=color:#bbb> </span>min_y;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span><span style=color:#8b008b;font-weight:700>for</span><span style=color:#bbb> </span>row<span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>in</span><span style=color:#bbb> </span><span style=color:#b452cd>0</span>..height<span style=color:#bbb> </span>{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:#8b008b;font-weight:700>let</span><span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>mut</span><span style=color:#bbb> </span>x<span style=color:#bbb> </span>=<span style=color:#bbb> </span>min_x;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span><span style=color:#8b008b;font-weight:700>for</span><span style=color:#bbb> </span>col<span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>in</span><span style=color:#bbb> </span><span style=color:#b452cd>0</span>..height{<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span>t[[row<span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>as</span><span style=color:#bbb> </span><span style=color:#00688b;font-weight:700>usize</span>,<span style=color:#bbb> </span>col<span style=color:#bbb> </span><span style=color:#8b008b;font-weight:700>as</span><span style=color:#bbb> </span><span style=color:#00688b;font-weight:700>usize</span>]]<span style=color:#bbb> </span>=<span style=color:#bbb> </span>mandelbrot(x,<span style=color:#bbb> </span>y,<span style=color:#bbb> </span>iters);<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>            </span>x<span style=color:#bbb> </span>+=<span style=color:#bbb> </span>dx;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>        </span>y<span style=color:#bbb> </span>+=<span style=color:#bbb> </span>dy;<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb>    </span>}<span style=color:#bbb>
+</span></span></span><span style=display:flex><span><span style=color:#bbb></span>}<span style=color:#bbb>
+</span></span></span></code></pre></td></tr></table></div></div><p>As a good practice, we allocate the Numpy array in Python and pass it to Rust to fill in the values. This allows the Python
+GIL to manage the memory.</p><p>The output is:</p><pre tabindex=0><code>151 ms ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+</code></pre><p>This is 46x improvement over the base case. Incidentally, this is the same speedup as the <code>mandelbrot_0</code> and <code>mandelbrot_1</code> in the
+part 1 of the Modular blog posts. So far everything is running on a single thread so we have explored neither the multi-thread capability
+of our Host nor the CPU SIMD capability. These will be explored in the future posts.</p><h1 id=summary>Summary</h1><table><thead><tr><th>Method</th><th>Time (s)</th></tr></thead><tbody><tr><td>Baseline</td><td>6.55</td></tr><tr><td>Numpy vectorization</td><td>6.37</td></tr><tr><td>Numpy parallelization</td><td>1.78</td></tr><tr><td>Numba</td><td>0.619</td></tr><tr><td>Rust</td><td>0.151</td></tr></tbody></table><hr width=100% id=EOF><p style=color:#777>Last modified on 2023-11-10</p></div></div><nav class=post-pagination><a class=newer-posts>Next<br>No newer posts.</a>
+<a class=older-posts href=/posts/rust-machine-learning/>Previous<br>Is Rust a Good Language for Machine Learning?</a></nav><div class=post-comment-wrapper></div></div></div></div></div><div id=single-column-footer>Hugo Theme <a href=https://github.com/amazingrise/hugo-theme-diary>Diary</a> by <a href=https://risehere.net/>Rise</a><br>Ported from <a href=https://mak1t0.cc/ target=_blank rel="noreferrer noopener">Makito</a>'s <a href=https://github.com/SumiMakito/hexo-theme-journal/ target=_blank rel="noreferrer noopener">Journal.</a><br><br>&copy;
+2023 Li Chen</div></div><script src=/js/journal.js></script></body></html>
