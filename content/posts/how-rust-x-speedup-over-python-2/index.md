@@ -1,5 +1,5 @@
 ---
-title: "How Rust X Speedup Over Python 2"
+title: "How Rust gets an x speedup over Python - Part 2"
 date: 2023-11-19T09:45:56-08:00
 draft: false
 ---

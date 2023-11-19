@@ -328,3 +328,4 @@ of our Host nor the CPU SIMD capability. These will be explored in the future po
 | Numba | 0.681 | 9.46 |
 | Rust | 0.141 | 45.74 |
 
+Also see [part 2](../how-rust-x-speedup-over-python-2) of this series.
