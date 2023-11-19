@@ -511,38 +511,45 @@ and it can build Rust code dynamically in a Python project:&lt;/p>
 &lt;/div>&lt;p>As a good practice, we allocate the Numpy array in Python and pass it to Rust to fill in the values. This allows the Python
 GIL to manage the memory.&lt;/p>
 &lt;p>The output is:&lt;/p>
-&lt;pre tabindex="0">&lt;code>151 ms ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+&lt;pre tabindex="0">&lt;code>141 ms ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
 &lt;/code>&lt;/pre>&lt;p>This is 46x improvement over the base case. Incidentally, this is the same speedup as the &lt;code>mandelbrot_0&lt;/code> and &lt;code>mandelbrot_1&lt;/code> in the
 part 1 of the Modular blog posts. So far everything is running on a single thread so we have explored neither the multi-thread capability
-of our Host nor the CPU SIMD capability. These will be explored in the future posts.&lt;/p>
+of our Host nor the CPU SIMD capability. These will be explored in the future posts. We also did not try to reproduce
+&lt;code>mandelbrot_2&lt;/code> in the mojo blog where they achieved a 89x speedup. They achieved this using the &lt;a href="https://en.wikipedia.org/wiki/FMA_instruction_set">FMA instruction set&lt;/a>; being a compiler project, &lt;code>mojo&lt;/code> has more control in selecting the instruction set.&lt;/p>
 &lt;h1 id="summary">Summary&lt;/h1>
 &lt;table>
 &lt;thead>
 &lt;tr>
 &lt;th>Method&lt;/th>
 &lt;th>Time (s)&lt;/th>
+&lt;th>Speedup&lt;/th>
 &lt;/tr>
 &lt;/thead>
 &lt;tbody>
 &lt;tr>
 &lt;td>Baseline&lt;/td>
 &lt;td>6.55&lt;/td>
+&lt;td>1.00&lt;/td>
 &lt;/tr>
 &lt;tr>
 &lt;td>Numpy vectorization&lt;/td>
 &lt;td>6.37&lt;/td>
+&lt;td>1.03&lt;/td>
 &lt;/tr>
 &lt;tr>
 &lt;td>Numpy parallelization&lt;/td>
 &lt;td>1.78&lt;/td>
+&lt;td>3.68&lt;/td>
 &lt;/tr>
 &lt;tr>
 &lt;td>Numba&lt;/td>
 &lt;td>0.619&lt;/td>
+&lt;td>10.58&lt;/td>
 &lt;/tr>
 &lt;tr>
 &lt;td>Rust&lt;/td>
-&lt;td>0.151&lt;/td>
+&lt;td>0.141&lt;/td>
+&lt;td>46.48&lt;/td>
 &lt;/tr>
 &lt;/tbody>
 &lt;/table>
