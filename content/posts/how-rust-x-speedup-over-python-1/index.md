@@ -322,9 +322,9 @@ of our Host nor the CPU SIMD capability. These will be explored in the future po
 
 | Method    | Time (s) | Speedup |
 | -------- | ------- | ------- |
-| Baseline  | 6.55   | 1.00    |
-| Numpy vectorization | 6.37 | 1.03 |
-| Numpy parallelization | 1.78 | 3.68 |
-| Numba | 0.619 | 10.58 |
-| Rust | 0.141 | 46.48 |
+| Baseline  | 6.44   | 1.00    |
+| Numpy vectorization | 6.37 | 1.01 |
+| Numpy parallelization | 1.71 | 3.77 |
+| Numba | 0.681 | 9.46 |
+| Rust | 0.141 | 45.74 |
 
