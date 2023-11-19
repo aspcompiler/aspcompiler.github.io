@@ -310,19 +310,21 @@ GIL to manage the memory.
 The output is:
 
 ```
-151 ms ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
+141 ms ± 0 ns per loop (mean ± std. dev. of 1 run, 1 loop each)
 ```
 
 This is 46x improvement over the base case. Incidentally, this is the same speedup as the `mandelbrot_0` and `mandelbrot_1` in the 
 part 1 of the Modular blog posts. So far everything is running on a single thread so we have explored neither the multi-thread capability
-of our Host nor the CPU SIMD capability. These will be explored in the future posts.
+of our Host nor the CPU SIMD capability. These will be explored in the future posts. We also did not try to reproduce
+`mandelbrot_2` in the mojo blog where they achieved a 89x speedup. They achieved this using the [FMA instruction set](https://en.wikipedia.org/wiki/FMA_instruction_set); being a compiler project, `mojo` has more control in selecting the instruction set.
 
 # Summary
 
-| Method    | Time (s) |
-| -------- | ------- |
-| Baseline  | 6.55   |
-| Numpy vectorization | 6.37 |
-| Numpy parallelization | 1.78 |
-| Numba | 0.619 |
-| Rust | 0.151 |
+| Method    | Time (s) | Speedup |
+| -------- | ------- | ------- |
+| Baseline  | 6.55   | 1.00    |
+| Numpy vectorization | 6.37 | 1.03 |
+| Numpy parallelization | 1.78 | 3.68 |
+| Numba | 0.619 | 10.58 |
+| Rust | 0.141 | 46.48 |
+
