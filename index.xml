@@ -1,4 +1,93 @@
-<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Fri, 10 Nov 2023 08:34:57 -0800</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>How Rust gets an x speedup over Python - Part 1</title><link>https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/</link><pubDate>Fri, 10 Nov 2023 08:34:57 -0800</pubDate><guid>https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/ -&lt;h1 id="introduction">Introduction&lt;/h1>
+<?xml-stylesheet href="/rss.xsl" type="text/xsl"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Li Chen's blog</title><link>https://aspcompiler.github.io/</link><description>Recent content on Li Chen's blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>2023 Li Chen</copyright><lastBuildDate>Sun, 19 Nov 2023 09:45:56 -0800</lastBuildDate><atom:link href="https://aspcompiler.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>How Rust X Speedup Over Python 2</title><link>https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-2/</link><pubDate>Sun, 19 Nov 2023 09:45:56 -0800</pubDate><guid>https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-2/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-2/ -&lt;h1 id="introduction">Introduction&lt;/h1>
+&lt;p>In the &lt;a href="../how-rust-x-speedup-over-python-1">part 1&lt;/a> of this series, we tried to reproduce the speed up over Python
+in &lt;a href="https://www.modular.com/blog/how-mojo-gets-a-35-000x-speedup-over-python-part-1">part 1 of a Modular blog&lt;/a>, but in `Rust``. We achieved 46x speedup over the base case. In this blog, we will try to reproduce
+&lt;a href="https://www.modular.com/blog/how-mojo-gets-a-35-000x-speedup-over-python-part-2">part 2&lt;/a> and
+&lt;a href="https://www.modular.com/blog/mojo-a-journey-to-68-000x-speedup-over-python-part-3">part 3&lt;/a> of the modular blog.&lt;/p>
+&lt;h1 id="simd">SIMD&lt;/h1>
+&lt;p>We will first explore the &lt;a href="https://en.wikipedia.org/wiki/Single_instruction,_multiple_data">SIMD instructions&lt;/a>. SIMD stands for Single Instruction Multiple Data. SIMD instructions are a type of instructions that can be executed on multiple data in parallel.&lt;/p>
+&lt;p>Currently, it is necessary to use Rust nightly to use SIMD instructions. Rust nightly can be installed with the following command:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-bash" data-lang="bash">&lt;span style="display:flex;">&lt;span>rustup toolchain install nightly
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The nightly toolchain can be invoked with the &lt;code>+nightly&lt;/code> argument in the &lt;code>cargo&lt;/code> command. Since we invoke the &lt;code>cargo&lt;/code>
+command indirectly through the &lt;code>maturin&lt;/code> tool, we instead add a &lt;code>rust-toolchain.toml&lt;/code> file in the root of the project with the following content:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-toml" data-lang="toml">&lt;span style="display:flex;">&lt;span>[toolchain]
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>channel = &lt;span style="color:#cd5555">&amp;#34;nightly&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;code>maturin&lt;/code> is the build tool for &lt;a href="https://pyo3.rs/v0.20.0/">PyO3&lt;/a> used to build Rust packages for Python.&lt;/p>
+&lt;p>We achieved an execution time of 30.2ms which is a 213x single-core speedup over the base case.&lt;/p>
+&lt;h1 id="parallelization">Parallelization&lt;/h1>
+&lt;p>Part of speedup achieved in the Modular blog is through parallelization. This is not a fair comparison to the single-core
+Python baseline. It is worth nothing Python also have parallel processing libraries like &lt;a href="https://www.ray.io/">Ray&lt;/a> or
+&lt;a href="https://www.dask.org/">Dask&lt;/a>. For the sake of comparison, we tried parallelization in Rust using &lt;a href="https://docs.rs/rayon/latest/rayon/">Rayon&lt;/a>.&lt;/p>
+&lt;p>Using my macPro with 6 cores and 12 hyperthreads, we achieved an execution time of 18.2ms without SIMD, which is a 354x speedup over the base case. With SIMD, we achieved an execution time of 4.8ms, which is a 1342x speedup over the base case.&lt;/p>
+&lt;h1 id="summary">Summary&lt;/h1>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Method&lt;/th>
+&lt;th>Time (s)&lt;/th>
+&lt;th>Speedup&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>Baseline&lt;/td>
+&lt;td>6.44&lt;/td>
+&lt;td>1.00&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Numpy vectorization&lt;/td>
+&lt;td>6.37&lt;/td>
+&lt;td>1.01&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Numpy parallelization&lt;/td>
+&lt;td>1.71&lt;/td>
+&lt;td>3.77&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Numba&lt;/td>
+&lt;td>0.681&lt;/td>
+&lt;td>9.46&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Rust&lt;/td>
+&lt;td>0.141&lt;/td>
+&lt;td>45.74&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Rust SIMD&lt;/td>
+&lt;td>0.0302&lt;/td>
+&lt;td>213.24&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Rust + Rayon&lt;/td>
+&lt;td>0.0182&lt;/td>
+&lt;td>354.40&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Rust SIMD + Rayon&lt;/td>
+&lt;td>0.0048&lt;/td>
+&lt;td>1342.50&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>We dd not try to match the very impressive speedup in the Modular blog as we did not try on a machine with 88 cores. Nevertheless, we tried our test cases in very accessible hardware and it should be useful in common use cases.&lt;/p>
+&lt;p>See the &lt;a href="https://github.com/aspcompiler/py-rust-mandel">source code&lt;/a> for the full implementation.&lt;/p>
+- https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-2/ - 2023 Li Chen</description></item><item><title>How Rust gets an x speedup over Python - Part 1</title><link>https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/</link><pubDate>Fri, 10 Nov 2023 08:34:57 -0800</pubDate><guid>https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/ -&lt;h1 id="introduction">Introduction&lt;/h1>
 &lt;p>Inspired by the Modular bog series, &lt;a href="https://www.modular.com/blog/how-mojo-gets-a-35-000x-speedup-over-python-part-1">part 1&lt;/a>,
 &lt;a href="https://www.modular.com/blog/how-mojo-gets-a-35-000x-speedup-over-python-part-2">part 2&lt;/a>, and
 &lt;a href="https://www.modular.com/blog/mojo-a-journey-to-68-000x-speedup-over-python-part-3">part 3&lt;/a>, I want to see what kind of speedup
@@ -528,28 +617,28 @@ of our Host nor the CPU SIMD capability. These will be explored in the future po
 &lt;tbody>
 &lt;tr>
 &lt;td>Baseline&lt;/td>
-&lt;td>6.55&lt;/td>
+&lt;td>6.44&lt;/td>
 &lt;td>1.00&lt;/td>
 &lt;/tr>
 &lt;tr>
 &lt;td>Numpy vectorization&lt;/td>
 &lt;td>6.37&lt;/td>
-&lt;td>1.03&lt;/td>
+&lt;td>1.01&lt;/td>
 &lt;/tr>
 &lt;tr>
 &lt;td>Numpy parallelization&lt;/td>
-&lt;td>1.78&lt;/td>
-&lt;td>3.68&lt;/td>
+&lt;td>1.71&lt;/td>
+&lt;td>3.77&lt;/td>
 &lt;/tr>
 &lt;tr>
 &lt;td>Numba&lt;/td>
-&lt;td>0.619&lt;/td>
-&lt;td>10.58&lt;/td>
+&lt;td>0.681&lt;/td>
+&lt;td>9.46&lt;/td>
 &lt;/tr>
 &lt;tr>
 &lt;td>Rust&lt;/td>
 &lt;td>0.141&lt;/td>
-&lt;td>46.48&lt;/td>
+&lt;td>45.74&lt;/td>
 &lt;/tr>
 &lt;/tbody>
 &lt;/table>
