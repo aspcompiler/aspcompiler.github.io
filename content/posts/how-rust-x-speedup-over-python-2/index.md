@@ -57,3 +57,74 @@ Using my macPro with 6 cores and 12 hyperthreads, we achieved an execution time 
 We dd not try to match the very impressive speedup in the Modular blog as we did not try on a machine with 88 cores. Nevertheless, we tried our test cases in very accessible hardware and it should be useful in common use cases.
 
 See the [source code](https://github.com/aspcompiler/py-rust-mandel) for the full implementation.
+
+# Dive into the code
+
+## Rayon
+
+Rayon is an amazing library for parallel processing. It takes just one method change to parallelize the code. In the
+example below, we literally just change `chunks_mut` to `par_chunks_mut` and the code is running in parallel.
+
+```rust
+    if parallel {
+        out.par_chunks_mut(width_in_blocks)
+            .enumerate()
+            .for_each(|(i, row)| {
+                let y = f32s::splat(min_y + dy * (i as f32));
+                row.iter_mut().enumerate().for_each(|(j, count)| {
+                    let x = xs[j];
+                    let z = Complex { real: x, imag: y };
+                    *count = MandelbrotIter::new(z).count(iters);
+                });
+            });
+    } else {
+        out.chunks_mut(width_in_blocks)
+            .enumerate()
+            .for_each(|(i, row)| {
+                let y = f32s::splat(min_y + dy * (i as f32));
+                row.iter_mut().enumerate().for_each(|(j, count)| {
+                    let x = xs[j];
+                    let z = Complex { real: x, imag: y };
+                    *count = MandelbrotIter::new(z).count(iters);
+                });
+            });
+    }
+```
+
+## SIMD
+
+SIMD does have a few new concepts. The first is the SIMD vector types, for example:
+    
+```rust
+type u32s = u32x8;
+type f32s = f32x8;
+type m32s = m32x8;
+```
+
+In the above example, each type is a vector of length 8. `m32` is a `mask` type that we will cover later.
+
+To create a vector from a scalar, we use the `splat` method:
+
+```rust
+32s::splat(4.0)
+```
+
+We can use arithmetic operators on vectors like we do on scalars:
+
+```rust
+let xx = x * x;
+let yy = y * y;
+let sum = xx + yy;
+```
+
+Now let us go back to `mask`. `mask` can be used as a vector of boolean. Comparisons between vectors return a `mask`.
+we can use the `select` method like `if ... else ...` logic for vectors:
+
+```rust
+let mask = sum.le(f32s::splat(4.0));
+let count = mask.select(count + 1, count);
+```
+
+There are a lot more to SIMD. I recommend the [Rust SIMD book](https://rust-lang.github.io/packed_simd/) for more details.
+Although `packed-simd` is getting replaced by [portable-simd](https://github.com/rust-lang/portable-simd). The former is
+still has the better documentation.
