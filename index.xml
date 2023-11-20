@@ -87,6 +87,114 @@ Python baseline. It is worth nothing Python also have parallel processing librar
 &lt;/table>
 &lt;p>We dd not try to match the very impressive speedup in the Modular blog as we did not try on a machine with 88 cores. Nevertheless, we tried our test cases in very accessible hardware and it should be useful in common use cases.&lt;/p>
 &lt;p>See the &lt;a href="https://github.com/aspcompiler/py-rust-mandel">source code&lt;/a> for the full implementation.&lt;/p>
+&lt;h1 id="dive-into-the-code">Dive into the code&lt;/h1>
+&lt;h2 id="rayon">Rayon&lt;/h2>
+&lt;p>Rayon is an amazing library for parallel processing. It takes just one method change to parallelize the code. In the
+example below, we literally just change &lt;code>chunks_mut&lt;/code> to &lt;code>par_chunks_mut&lt;/code> and the code is running in parallel.&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">if&lt;/span>&lt;span style="color:#bbb"> &lt;/span>parallel&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>out.par_chunks_mut(width_in_blocks)&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>.enumerate()&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>.for_each(|(i,&lt;span style="color:#bbb"> &lt;/span>row)|&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>y&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>f32s::splat(min_y&lt;span style="color:#bbb"> &lt;/span>+&lt;span style="color:#bbb"> &lt;/span>dy&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>(i&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">as&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>));&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>row.iter_mut().enumerate().for_each(|(j,&lt;span style="color:#bbb"> &lt;/span>count)|&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>x&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>xs[j];&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>z&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>Complex&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb"> &lt;/span>real: &lt;span style="color:#008b45;font-weight:bold">x&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>imag: &lt;span style="color:#008b45;font-weight:bold">y&lt;/span>&lt;span style="color:#bbb"> &lt;/span>};&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>*count&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>MandelbrotIter::new(z).count(iters);&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>});&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>});&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">else&lt;/span>&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>out.chunks_mut(width_in_blocks)&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>.enumerate()&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>.for_each(|(i,&lt;span style="color:#bbb"> &lt;/span>row)|&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>y&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>f32s::splat(min_y&lt;span style="color:#bbb"> &lt;/span>+&lt;span style="color:#bbb"> &lt;/span>dy&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>(i&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">as&lt;/span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#00688b;font-weight:bold">f32&lt;/span>));&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>row.iter_mut().enumerate().for_each(|(j,&lt;span style="color:#bbb"> &lt;/span>count)|&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>x&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>xs[j];&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>z&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>Complex&lt;span style="color:#bbb"> &lt;/span>{&lt;span style="color:#bbb"> &lt;/span>real: &lt;span style="color:#008b45;font-weight:bold">x&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>imag: &lt;span style="color:#008b45;font-weight:bold">y&lt;/span>&lt;span style="color:#bbb"> &lt;/span>};&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>*count&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>MandelbrotIter::new(z).count(iters);&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>});&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>});&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb"> &lt;/span>}&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="simd-1">SIMD&lt;/h2>
+&lt;p>SIMD does have a few new concepts. The first is the SIMD vector types, for example:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">type&lt;/span> &lt;span style="color:#008b45;font-weight:bold">u32s&lt;/span>&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>u32x8;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">type&lt;/span> &lt;span style="color:#008b45;font-weight:bold">f32s&lt;/span>&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>f32x8;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">type&lt;/span> &lt;span style="color:#008b45;font-weight:bold">m32s&lt;/span>&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>m32x8;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In the above example, each type is a vector of length 8. &lt;code>m32&lt;/code> is a &lt;code>mask&lt;/code> type that we will cover later.&lt;/p>
+&lt;p>To create a vector from a scalar, we use the &lt;code>splat&lt;/code> method:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#b452cd">32&lt;/span>s::splat(&lt;span style="color:#b452cd">4.0&lt;/span>)&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We can use arithmetic operators on vectors like we do on scalars:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>xx&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>x&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>x;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>yy&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>y&lt;span style="color:#bbb"> &lt;/span>*&lt;span style="color:#bbb"> &lt;/span>y;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>sum&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>xx&lt;span style="color:#bbb"> &lt;/span>+&lt;span style="color:#bbb"> &lt;/span>yy;&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Now let us go back to &lt;code>mask&lt;/code>. &lt;code>mask&lt;/code> can be used as a vector of boolean. Comparisons between vectors return a &lt;code>mask&lt;/code>.
+we can use the &lt;code>select&lt;/code> method like &lt;code>if ... else ...&lt;/code> logic for vectors:&lt;/p>
+&lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+&lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1
+&lt;/span>&lt;span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td style="vertical-align:top;padding:0;margin:0;border:0;;width:100%">
+&lt;pre tabindex="0" style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-rust" data-lang="rust">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>mask&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>sum.le(f32s::splat(&lt;span style="color:#b452cd">4.0&lt;/span>));&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#bbb">&lt;/span>&lt;span style="color:#8b008b;font-weight:bold">let&lt;/span>&lt;span style="color:#bbb"> &lt;/span>count&lt;span style="color:#bbb"> &lt;/span>=&lt;span style="color:#bbb"> &lt;/span>mask.select(count&lt;span style="color:#bbb"> &lt;/span>+&lt;span style="color:#bbb"> &lt;/span>&lt;span style="color:#b452cd">1&lt;/span>,&lt;span style="color:#bbb"> &lt;/span>count);&lt;span style="color:#bbb">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>There are a lot more to SIMD. I recommend the &lt;a href="https://rust-lang.github.io/packed_simd/">Rust SIMD book&lt;/a> for more details.
+Although &lt;code>packed-simd&lt;/code> is getting replaced by &lt;a href="https://github.com/rust-lang/portable-simd">portable-simd&lt;/a>. The former is
+still has the better documentation.&lt;/p>
 - https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-2/ - 2023 Li Chen</description></item><item><title>How Rust gets an x speedup over Python - Part 1</title><link>https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/</link><pubDate>Fri, 10 Nov 2023 08:34:57 -0800</pubDate><guid>https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/</guid><description>Li Chen's blog https://aspcompiler.github.io/posts/how-rust-x-speedup-over-python-1/ -&lt;h1 id="introduction">Introduction&lt;/h1>
 &lt;p>Inspired by the Modular bog series, &lt;a href="https://www.modular.com/blog/how-mojo-gets-a-35-000x-speedup-over-python-part-1">part 1&lt;/a>,
 &lt;a href="https://www.modular.com/blog/how-mojo-gets-a-35-000x-speedup-over-python-part-2">part 2&lt;/a>, and
