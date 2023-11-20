@@ -54,13 +54,17 @@ Using my macPro with 6 cores and 12 hyperthreads, we achieved an execution time 
 | Rust + Rayon | 0.0182 | 354.40 |
 | Rust SIMD + Rayon | 0.0048 | 1342.50 |
 
-We dd not try to match the very impressive speedup in the Modular blog as we did not try on a machine with 88 cores. Nevertheless, we tried our test cases in very accessible hardware and it should be useful in common use cases.
-
 See the [source code](https://github.com/aspcompiler/py-rust-mandel) for the full implementation.
 
-# Dive into the code
+1. We have achieved single core speed up of 213. Of them, 46x is from converting Python to Rust and 4.7x from SIMD.
+2. We did not believe it is a fair to compare multi-core Rust to single core Python baseline as Python itself has some
+excellent parallel processing libraries. Nevertheless, we demonstrated that Rust code can be parallelized with the change
+of a single method call. A speed-up of 6-8x is achievable on a 6 core CPU (12 hyper-thread). Parallelization itself is
+an interesting subject, especially on tasks of different lengths. We will explore this in the future posts.
+3. Out SIMD code has a separate code base. We believe that it is possible to combine the SIMD and non-SIMD code base
+using Rust generics and traits. We will explore this in the future posts.
 
-## Rayon
+# Appendix 1: Rayon
 
 Rayon is an amazing library for parallel processing. It takes just one method change to parallelize the code. In the
 example below, we literally just change `chunks_mut` to `par_chunks_mut` and the code is running in parallel.
@@ -91,7 +95,10 @@ example below, we literally just change `chunks_mut` to `par_chunks_mut` and the
     }
 ```
 
-## SIMD
+The Rayon code can be further optimized to account for the fact that the kernel function can exist early, and thus uneven length.
+We will explore this in the future posts. For now, I will refer users to [this project](https://github.com/ProgrammingRust/mandelbrot) for inspiration.
+
+# Appendix 2: ßSIMD
 
 SIMD does have a few new concepts. The first is the SIMD vector types, for example:
     
