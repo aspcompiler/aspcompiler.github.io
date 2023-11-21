@@ -98,7 +98,7 @@ example below, we literally just change `chunks_mut` to `par_chunks_mut` and the
 The Rayon code can be further optimized to account for the fact that the kernel function can exist early, and thus uneven length.
 We will explore this in the future posts. For now, I will refer users to [this project](https://github.com/ProgrammingRust/mandelbrot) for inspiration.
 
-# Appendix 2: ßSIMD
+# Appendix 2: SIMD
 
 SIMD does have a few new concepts. The first is the SIMD vector types, for example:
     
