@@ -152,7 +152,7 @@ example below, we literally just change &lt;code>chunks_mut&lt;/code> to &lt;cod
 &lt;/div>
 &lt;/div>&lt;p>The Rayon code can be further optimized to account for the fact that the kernel function can exist early, and thus uneven length.
 We will explore this in the future posts. For now, I will refer users to &lt;a href="https://github.com/ProgrammingRust/mandelbrot">this project&lt;/a> for inspiration.&lt;/p>
-&lt;h1 id="appendix-2-ßsimd">Appendix 2: ßSIMD&lt;/h1>
+&lt;h1 id="appendix-2-simd">Appendix 2: SIMD&lt;/h1>
 &lt;p>SIMD does have a few new concepts. The first is the SIMD vector types, for example:&lt;/p>
 &lt;div class="highlight">&lt;div style="background-color:#eed;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
 &lt;table style="border-spacing:0;padding:0;margin:0;border:0;">&lt;tr>&lt;td style="vertical-align:top;padding:0;margin:0;border:0;">
